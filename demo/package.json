@@ -2,10 +2,13 @@
   "name": "airbyte-embedded-widget-demo",
   "private": true,
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "license": "UNLICENSED",
   "devDependencies": {
+    "@playwright/test": "^1.42.1",
     "@types/node": "^22.13.14",
     "@vitejs/plugin-basic-ssl": "^2.0.0",
     "prettier": "^3.5.3",
