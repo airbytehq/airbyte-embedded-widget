@@ -1,0 +1,39 @@
+{
+  "name": "airbyte-embedded-widget",
+  "version": "0.0.1",
+  "description": "Embed Airbyte's UI components in your application",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "pnpm run build",
+    "format": "prettier --write .",
+    "lint": "prettier --check .",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "airbyte",
+    "embedded",
+    "modal",
+    "sources",
+    "connectors",
+    "ui",
+    "oauth",
+    "authentication",
+    "authorization",
+    "connect",
+    "connector",
+    "connectors"
+  ],
+  "author": "Airbyte",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "eslint": "^9.23.0",
+    "typescript": "^5.3.3"
+  }
+}

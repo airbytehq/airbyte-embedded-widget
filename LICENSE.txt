@@ -1,0 +1,5 @@
+Commercial License
+
+Commercial Terms Apply
+This repository contains code, artifacts, and documents which are available for use only as part of the Airbyte Embedded product.  No other use of the contents of this repository are permissible.
+Visit www.airbyte.com/embedded to learn more.
