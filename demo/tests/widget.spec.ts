@@ -1,31 +1,102 @@
 import { test, expect } from "@playwright/test";
 
-test("widget opens and displays correctly", async ({ page }) => {
-  // Start the dev server
-  await page.goto("https://localhost:5173");
+test.describe("Airbyte Widget", () => {
+  test.beforeEach(async ({ page }) => {
+    // Enable verbose logging
+    page.on("console", (msg) => console.log("Browser console:", msg.text()));
+    page.on("pageerror", (err) => console.error("Browser error:", err));
 
-  // Accept any SSL certificate warnings
-  await page.getByRole("button", { name: "Advanced" }).click();
-  await page.getByRole("button", { name: "Proceed to localhost (unsafe)" }).click();
+    // Mock all required API endpoints
+    await page.route("**/api/v1/applications/token", async (route) => {
+      console.log("Token request intercepted");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ access_token: "test-token" }),
+      });
+    });
 
-  // Check if the widget button is present
-  const widgetButton = page.getByRole("button", { name: "Open Airbyte" });
-  await expect(widgetButton).toBeVisible();
+    // Mock config templates endpoint
+    await page.route("**/api/v1/config_templates/list", async (route) => {
+      console.log("Config templates request intercepted");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          configTemplates: [],
+          totalCount: 0,
+        }),
+      });
+    });
 
-  // Click the button to open the widget
-  await widgetButton.click();
+    // Mock any other API endpoints that might be called
+    await page.route("**/api/v1/**", async (route) => {
+      console.log(`API request intercepted: ${route.request().url()}`);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({}),
+      });
+    });
 
-  // Check if the dialog is visible
-  const dialog = page.getByRole("dialog", { name: "Airbyte Widget" });
-  await expect(dialog).toBeVisible();
+    // Navigate to the page and wait for network idle
+    console.log("Navigating to page...");
+    await page.goto("/", { waitUntil: "networkidle" });
+    console.log("Page loaded");
 
-  // Check if the iframe is present
-  const iframe = page.frameLocator("iframe");
-  await expect(iframe).toBeVisible();
+    // Wait for either the widget button to appear or an error message
+    console.log("Waiting for widget initialization...");
+    await Promise.race([
+      page.waitForSelector("button.airbyte-widget-button:has-text('Open Airbyte')", { timeout: 10000 }),
+      page.waitForSelector("#error", { timeout: 10000 }),
+    ]);
 
-  // Close the dialog
-  await page.getByRole("button", { name: "Close" }).click();
+    // Check for any error messages
+    const errorEl = page.locator("#error");
+    const errorText = await errorEl.textContent();
+    if (errorText && errorText.trim()) {
+      console.error("Error on page:", errorText);
+      throw new Error(`Widget initialization failed: ${errorText}`);
+    }
 
-  // Check if the dialog is closed
-  await expect(dialog).not.toBeVisible();
+    // Verify widget button is present
+    const button = page.locator("button.airbyte-widget-button:has-text('Open Airbyte')");
+    await expect(button).toBeVisible();
+    console.log("Widget button is visible");
+  });
+
+  test("widget opens and closes correctly", async ({ page }) => {
+    console.log("Starting widget test...");
+
+    // Click the button to open the widget
+    const button = page.locator("button.airbyte-widget-button:has-text('Open Airbyte')");
+    await button.click();
+    console.log("Widget button clicked");
+
+    // Check if the dialog is visible
+    const dialog = page.locator("dialog.airbyte-widget-dialog");
+    await expect(dialog).toBeVisible();
+    console.log("Dialog is visible");
+
+    // Check if the iframe is present and visible
+    const iframeElement = page.locator("iframe.airbyte-widget-iframe");
+    await expect(iframeElement).toBeVisible();
+    console.log("Iframe is visible");
+
+    // Verify iframe source contains required parameters
+    const iframeSrc = await iframeElement.getAttribute("src");
+    console.log("Iframe src:", iframeSrc);
+    expect(iframeSrc).toContain("workspaceId=");
+    expect(iframeSrc).toContain("organizationId=");
+    expect(iframeSrc).toContain("auth=");
+
+    // Close the dialog
+    const closeButton = page.locator("button.airbyte-widget-close");
+    await closeButton.click();
+    console.log("Dialog closed");
+
+    // Verify dialog is closed
+    await expect(dialog).not.toBeVisible();
+    console.log("Dialog is not visible");
+  });
 });

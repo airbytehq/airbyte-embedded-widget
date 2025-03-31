@@ -1,7 +1,7 @@
 {
   "name": "airbyte-embedded-widget",
   "version": "0.0.1",
-  "description": "Embed Airbyte's UI components in your application",
+  "description": "Embedded widget for Airbyte",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "publishConfig": {
@@ -32,8 +32,12 @@
   "author": "Airbyte",
   "license": "UNLICENSED",
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/node": "^20.11.24",
     "eslint": "^9.23.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   }
 }

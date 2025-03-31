@@ -1,6 +1,7 @@
 export interface EmbeddedWidgetConfig {
   workspaceId: string;
   organizationId: string;
+  baseUrl: string;
   token: string;
 }
 
@@ -8,6 +9,7 @@ export class EmbeddedWidget {
   private workspaceId: string;
   private organizationId: string;
   private token: string;
+  private baseUrl: string;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
 
@@ -15,6 +17,7 @@ export class EmbeddedWidget {
     this.workspaceId = config.workspaceId;
     this.organizationId = config.organizationId;
     this.token = config.token;
+    this.baseUrl = config.baseUrl;
     this.initialize();
   }
 
@@ -114,7 +117,7 @@ export class EmbeddedWidget {
     // Create iframe
     this.iframe.setAttribute(
       "src",
-      `https://embedded.internal.airbyte.dev/embedded-widget?workspaceId=${this.workspaceId}&organizationId=${this.organizationId}&auth=${this.token}`
+      `${this.baseUrl}/embedded-widget?workspaceId=${this.workspaceId}&organizationId=${this.organizationId}&auth=${this.token}`
     );
     this.iframe.setAttribute("frameborder", "0");
     this.iframe.setAttribute("allow", "fullscreen");

@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { loadEnv } from "vite";
+
+// Load test environment variables
+const env = loadEnv("test", process.cwd(), "");
 
 export default defineConfig({
   testDir: "./tests",
@@ -8,9 +12,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "https://localhost:5173",
+    baseURL: "https://localhost:3000",
     trace: "on-first-retry",
-    // Ignore HTTPS errors
     ignoreHTTPSErrors: true,
   },
   projects: [
@@ -20,9 +23,18 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
-    url: "https://localhost:5173",
+    command: "NODE_ENV=test pnpm dev",
+    url: "https://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 120 seconds
+    ignoreHTTPSErrors: true,
+    env: {
+      NODE_ENV: "test",
+      VITE_AB_BASE_URL: env.VITE_AB_BASE_URL,
+      VITE_AB_API_CLIENT_ID: env.VITE_AB_API_CLIENT_ID,
+      VITE_AB_API_CLIENT_SECRET: env.VITE_AB_API_CLIENT_SECRET,
+      VITE_AB_WORKSPACE_ID: env.VITE_AB_WORKSPACE_ID,
+      VITE_AB_ORGANIZATION_ID: env.VITE_AB_ORGANIZATION_ID,
+    },
   },
 });

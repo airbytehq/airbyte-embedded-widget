@@ -4,14 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Airbyte Widget Demo</title>
+    <style>
+      .loading {
+        display: none;
+        color: #fff;
+        margin-top: 1rem;
+      }
+      .error {
+        color: red;
+        margin-top: 1rem;
+      }
+      #app {
+        min-height: 200px;
+      }
+    </style>
   </head>
   <body>
     <h1>Airbyte Widget Demo</h1>
+    <div id="app">
+      <div id="loading" class="loading">Loading widget...</div>
+      <div id="error" class="error"></div>
+    </div>
     <script type="module">
-      import { EmbeddedWidget } from "../src/index.ts";
+      import { EmbeddedWidget } from "../src/index";
+
+      const loadingEl = document.getElementById("loading");
+      const errorEl = document.getElementById("error");
 
       async function initializeWidget() {
         try {
+          // Show loading state
+          loadingEl.style.display = "block";
+          errorEl.textContent = "";
+
           console.log("Fetching token with credentials:", {
             client_id: import.meta.env.VITE_AB_API_CLIENT_ID || "",
             client_secret: import.meta.env.VITE_AB_API_CLIENT_SECRET || "",
@@ -40,17 +65,24 @@
             workspaceId: import.meta.env.VITE_AB_WORKSPACE_ID,
             organizationId: import.meta.env.VITE_AB_ORGANIZATION_ID,
             token: access_token,
+            baseUrl: import.meta.env.VITE_AB_BASE_URL,
           });
+
+          // Hide loading state on success
+          loadingEl.style.display = "none";
         } catch (error) {
           console.error("Error initializing widget:", error);
-          document.body.innerHTML += `
-            <p style="color: red;">Failed to initialize widget:</p>
-            <pre style="color: red; white-space: pre-wrap;">${error.message}</pre>
+          // Hide loading state and show error
+          loadingEl.style.display = "none";
+          errorEl.innerHTML = `
+            <p>Failed to initialize widget:</p>
+            <pre style="white-space: pre-wrap;">${error.message}</pre>
             <p>Check console for more details.</p>
           `;
         }
       }
 
+      // Start initialization
       initializeWidget();
     </script>
   </body>
