@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Demo App Tests
 
 on:
   push:
@@ -7,8 +7,12 @@ on:
     branches: [main]
 
 jobs:
-  jest:
+  playwright:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: demo
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -20,11 +24,13 @@ jobs:
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
-      - name: Run Jest tests
+      - name: Install playwright browser
+        run: pnpm dlx playwright install --with-deps chromium
+      - name: Run Playwright tests
         run: pnpm test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: jest-report
-          path: coverage/
+          name: playwright-report
+          path: demo/playwright-report/
           retention-days: 30

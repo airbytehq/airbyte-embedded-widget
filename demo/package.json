@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "test": "pnpm dlx playwright install --with-deps chromium && playwright test",
-    "test:ui": "pnpm dlx playwright install --with-deps chromium && playwright test --ui"
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "license": "UNLICENSED",
   "devDependencies": {
