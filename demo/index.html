@@ -42,6 +42,7 @@
             client_secret: import.meta.env.VITE_AB_API_CLIENT_SECRET || "",
           });
 
+          // Note: This should be an API call to the customer's backend server, not Airbyte directly
           const response = await fetch(`${import.meta.env.VITE_AB_BASE_URL}/api/v1/applications/token`, {
             method: "POST",
             headers: {
