@@ -32,7 +32,7 @@ importers:
 
   demo:
     dependencies:
-      '@airbyte-embedded/airbyte-embedded-modal':
+      '@airbyte-embedded/airbyte-embedded-widget':
         specifier: workspace:*
         version: link:..
     devDependencies:
