@@ -1,0 +1,27 @@
+name: Publish Widget
+on:
+  push:
+    branches: [main]
+    paths: ["widget/**"]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+      - name: Install PNPM
+        run: npm install -g pnpm
+      - name: Install dependencies
+        run: pnpm install
+      - name: Publish
+        run: ./scripts/publish.sh
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

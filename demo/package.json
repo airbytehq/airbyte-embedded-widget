@@ -7,6 +7,9 @@
     "test:ui": "playwright test --ui"
   },
   "license": "UNLICENSED",
+  "dependencies": {
+    "@airbyte-embedded/airbyte-embedded-modal": "workspace:*"
+  },
   "devDependencies": {
     "@playwright/test": "^1.42.1",
     "@types/node": "^22.13.14",
