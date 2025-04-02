@@ -1,21 +1,30 @@
 export interface EmbeddedWidgetConfig {
   iframeSrc: string;
   token: string;
+  hideButton?: boolean;
+  onEvent?: (event: WidgetEvent) => void;
 }
+
+export type WidgetEvent = {
+  type: string;
+  data: any;
+};
 
 export class EmbeddedWidget {
   private token: string;
   private iframeSrc: string;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
+  private onEvent?: (event: WidgetEvent) => void;
 
   constructor(config: EmbeddedWidgetConfig) {
     this.token = config.token;
     this.iframeSrc = config.iframeSrc;
-    this.initialize();
+    this.onEvent = config.onEvent;
+    this.initialize(config.hideButton);
   }
 
-  private initialize(): void {
+  private initialize(hideButton = false): void {
     // Add font import
     const fontLink = document.createElement("link");
     fontLink.rel = "stylesheet";
@@ -121,11 +130,26 @@ export class EmbeddedWidget {
       this.iframe.contentWindow?.postMessage({ scopedAuthToken: this.token }, iframeOrigin);
     });
 
-    // Create button
-    const button = document.createElement("button");
-    button.textContent = "Open Airbyte";
-    button.classList.add("airbyte-widget-button");
-    button.addEventListener("click", () => this.dialog.showModal());
+    // Listen for messages from the iframe
+    const iframeOrigin = new URL(this.iframeSrc).origin;
+    window.addEventListener("message", (event) => {
+      // Only accept messages from the iframe's origin
+      if (event.origin !== iframeOrigin) return;
+
+      // Pass the event to the callback if provided
+      if (this.onEvent && event.data?.type) {
+        this.onEvent(event.data as WidgetEvent);
+      }
+    });
+
+    // Create button if not hidden
+    if (!hideButton) {
+      const button = document.createElement("button");
+      button.textContent = "Open Airbyte";
+      button.classList.add("airbyte-widget-button");
+      button.addEventListener("click", () => this.open());
+      document.body.appendChild(button);
+    }
 
     // Add close button to dialog
     const closeButton = document.createElement("button");
@@ -134,8 +158,11 @@ export class EmbeddedWidget {
     closeButton.addEventListener("click", () => this.dialog.close());
     this.dialog.appendChild(closeButton);
 
-    // Add elements to document
+    // Add dialog to document
     document.body.appendChild(this.dialog);
-    document.body.appendChild(button);
+  }
+
+  public open(): void {
+    this.dialog.showModal();
   }
 }
