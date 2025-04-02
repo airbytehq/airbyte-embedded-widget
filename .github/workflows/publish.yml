@@ -22,7 +22,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Publish
-        working-directory: widget
         run: ./scripts/publish.sh
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
