@@ -1,10 +1,8 @@
 import { EmbeddedWidget } from "../src/EmbeddedWidget";
 
 const defaultConfig = {
-  workspaceId: "test-workspace",
-  organizationId: "test-org",
+  iframeSrc: "https://test.airbyte.com/widget",
   token: "test-token",
-  baseUrl: "https://test.airbyte.com",
 };
 
 describe("EmbeddedWidget", () => {
@@ -56,7 +54,13 @@ describe("EmbeddedWidget", () => {
       }
     });
 
-    mockIframe = originalCreateElement.call(document, "iframe");
+    mockIframe = {
+      ...originalCreateElement.call(document, "iframe"),
+      addEventListener: jest.fn(),
+      contentWindow: {
+        postMessage: jest.fn(),
+      },
+    } as unknown as HTMLIFrameElement;
 
     // Mock document.createElement
     document.createElement = jest.fn((tagName: string) => {
@@ -103,12 +107,24 @@ describe("EmbeddedWidget", () => {
   test("creates iframe with correct attributes", () => {
     const iframe = document.querySelector("iframe") as HTMLIFrameElement;
     expect(iframe).toBeDefined();
-    expect(iframe.src).toContain(`workspaceId=${defaultConfig.workspaceId}`);
-    expect(iframe.src).toContain(`organizationId=${defaultConfig.organizationId}`);
-    expect(iframe.src).toContain(`auth=${defaultConfig.token}`);
+    expect(iframe.src).toBe(defaultConfig.iframeSrc);
     expect(iframe.getAttribute("frameborder")).toBe("0");
     expect(iframe.getAttribute("allow")).toBe("fullscreen");
     expect(iframe.classList.contains("airbyte-widget-iframe")).toBe(true);
+  });
+
+  test("posts token to iframe when loaded", () => {
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+    const loadHandler = (iframe.addEventListener as jest.Mock).mock.calls.find((call) => call[0] === "load")?.[1];
+
+    // Simulate iframe load
+    loadHandler();
+
+    // Verify postMessage was called with correct parameters
+    expect(iframe.contentWindow?.postMessage).toHaveBeenCalledWith(
+      { scopedAuthToken: defaultConfig.token },
+      new URL(defaultConfig.iframeSrc).origin
+    );
   });
 
   test("creates button with correct attributes", () => {

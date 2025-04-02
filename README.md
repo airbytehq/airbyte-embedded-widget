@@ -48,19 +48,24 @@ The built files will be in the `dist` directory.
 
 ## Usage
 
+To use this library, you will first need to fetch a token and the iframe src
+
+```
+TODO!
+```
+
+This will generate a scoped token such that an end user will be able to create Airbyte source configurations within the workspace you have created for them.
+
+These values should then be passed to where you initializze the widget like so:
+
 ```typescript
 import { EmbeddedWidget } from "airbyte-embedded-widget";
 
 // Initialize the widget
 const widget = new EmbeddedWidget({
-  organizationId: "your_organization_id",
-  workspaceId: "your_customer_workspace_id",
-  token: "your_api_token",
-  // Additional configuration options
+  iframeSrc: res.iframeSrc,
+  token: res.token,
 });
-
-// Mount the widget
-widget.mount("#widget-container");
 ```
 
 ## Demo Application
@@ -75,8 +80,12 @@ The demo application in the `/demo` directory shows a complete example of integr
 To configure the demo, create a `.env` file in the `/demo` directory:
 
 ```env
-VITE_API_TOKEN=your_api_token_here
+VITE_AB_BASE_URL=https://your-airbyte-instance.com
+VITE_AB_API_CLIENT_ID=your_client_id
+VITE_AB_API_CLIENT_SECRET=your_client_secret
 ```
+
+The widget will automatically fetch a token using these credentials and initialize with the correct configuration.
 
 ## Publishing
 
@@ -91,7 +100,7 @@ To create a new version, you can use the following command:
 pnpm version <major|minor|patch>
 ```
 
-and then push those changes to the main branch.  Don't forget the tags!
+and then push those changes to the main branch. Don't forget the tags!
 
 ```bash
 git push origin main --tags && git push

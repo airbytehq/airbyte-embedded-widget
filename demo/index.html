@@ -42,7 +42,7 @@
             client_secret: import.meta.env.VITE_AB_API_CLIENT_SECRET || "",
           });
 
-          // Note: This should be an API call to the customer's backend server, not Airbyte directly
+          // Note: This should be an API call from the customer's backend server, not in the client directly
           const response = await fetch(`${import.meta.env.VITE_AB_BASE_URL}/api/v1/applications/token`, {
             method: "POST",
             headers: {
@@ -61,12 +61,11 @@
 
           const { access_token } = await response.json();
           console.log("Received token:", access_token);
+          const allowedOrigin = new URL(import.meta.env.VITE_AB_BASE_URL).origin;
 
           new EmbeddedWidget({
-            workspaceId: import.meta.env.VITE_AB_WORKSPACE_ID,
-            organizationId: import.meta.env.VITE_AB_ORGANIZATION_ID,
+            iframeSrc: `${import.meta.env.VITE_AB_BASE_URL}/widget?workspaceId=123&organizationId=456&allowedOrigin=${allowedOrigin}`,
             token: access_token,
-            baseUrl: import.meta.env.VITE_AB_BASE_URL,
           });
 
           // Hide loading state on success

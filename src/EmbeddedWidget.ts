@@ -1,23 +1,17 @@
 export interface EmbeddedWidgetConfig {
-  workspaceId: string;
-  organizationId: string;
-  baseUrl: string;
+  iframeSrc: string;
   token: string;
 }
 
 export class EmbeddedWidget {
-  private workspaceId: string;
-  private organizationId: string;
   private token: string;
-  private baseUrl: string;
+  private iframeSrc: string;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
 
   constructor(config: EmbeddedWidgetConfig) {
-    this.workspaceId = config.workspaceId;
-    this.organizationId = config.organizationId;
     this.token = config.token;
-    this.baseUrl = config.baseUrl;
+    this.iframeSrc = config.iframeSrc;
     this.initialize();
   }
 
@@ -115,14 +109,17 @@ export class EmbeddedWidget {
     this.dialog.classList.add("airbyte-widget-dialog");
 
     // Create iframe
-    this.iframe.setAttribute(
-      "src",
-      `${this.baseUrl}/embedded-widget?workspaceId=${this.workspaceId}&organizationId=${this.organizationId}&auth=${this.token}`
-    );
+    this.iframe.setAttribute("src", encodeURI(this.iframeSrc));
     this.iframe.setAttribute("frameborder", "0");
     this.iframe.setAttribute("allow", "fullscreen");
     this.iframe.classList.add("airbyte-widget-iframe");
     this.dialog.appendChild(this.iframe);
+
+    // Post token to iframe when it loads
+    this.iframe.addEventListener("load", () => {
+      const iframeOrigin = new URL(this.iframeSrc).origin;
+      this.iframe.contentWindow?.postMessage({ scopedAuthToken: this.token }, iframeOrigin);
+    });
 
     // Create button
     const button = document.createElement("button");

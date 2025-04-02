@@ -86,9 +86,16 @@ test.describe("Airbyte Widget", () => {
     // Verify iframe source contains required parameters
     const iframeSrc = await iframeElement.getAttribute("src");
     console.log("Iframe src:", iframeSrc);
-    expect(iframeSrc).toContain("workspaceId=");
-    expect(iframeSrc).toContain("organizationId=");
-    expect(iframeSrc).toContain("auth=");
+    expect(iframeSrc).toBe(`${process.env.VITE_AB_BASE_URL}/embedded-widget`);
+
+    // Mock postMessage and wait for it to be called
+    const postMessageSpy = jest.spyOn(window, "postMessage");
+    await page.waitForFunction(() => {
+      return postMessageSpy.mock.calls.some(
+        (call) =>
+          call[0].scopedAuthToken === "test-token" && call[1] === new URL(process.env.VITE_AB_BASE_URL || "").origin
+      );
+    });
 
     // Close the dialog
     const closeButton = page.locator("button.airbyte-widget-close");
