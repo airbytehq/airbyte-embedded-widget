@@ -2,7 +2,6 @@ name: Publish Widget
 on:
   push:
     branches: [main]
-    paths: ["widget/**"]
   workflow_dispatch:
 jobs:
   build:
