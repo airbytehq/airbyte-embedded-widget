@@ -10,38 +10,62 @@ export type WidgetEvent = {
 };
 
 export class EmbeddedWidget {
-  private token: string;
   private decodedToken: any;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
   private onEvent?: (event: WidgetEvent) => void;
-  private iframeSrc: string;
 
   constructor(config: EmbeddedWidgetConfig) {
-    this.token = config.token;
     this.onEvent = config.onEvent;
     this.decodedToken = this.decodeToken(config.token);
-
-    // Extract iframe URL from the decoded token
-    if (this.decodedToken && this.decodedToken.url) {
-      this.iframeSrc = this.decodedToken.url;
-    } else {
-      console.error("No URL found in decoded token");
-      this.iframeSrc = ""; // Provide a fallback or empty string
-    }
-
     this.initialize(config.hideButton);
   }
 
   private decodeToken(token: string): any {
-    try {
-      // Decode base64 token to a string
-      const decoded = atob(token);
-      // Parse the decoded string as JSON
-      return JSON.parse(decoded);
-    } catch (error) {
-      console.error("Failed to decode token:", error);
+    if (!token) {
       return null;
+    }
+
+    try {
+      // Check if the token is in JWT format (contains two dots)
+      if (token.split(".").length === 3) {
+        const payloadBase64 = token.split(".")[1];
+
+        // Decode the payload part (second segment)
+        const decodedPayload = this.decodeBase64(payloadBase64);
+
+        try {
+          return JSON.parse(decodedPayload);
+        } catch (parseError) {
+          return null;
+        }
+      }
+
+      // Try plain base64 decode
+      const decoded = this.decodeBase64(token);
+
+      try {
+        return JSON.parse(decoded);
+      } catch (parseError) {
+        // If it's not JSON, return the string itself
+        return { rawDecodedValue: decoded };
+      }
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private decodeBase64(str: string): string {
+    // Make sure the base64 string is properly padded
+    const padded = str.padEnd(str.length + ((4 - (str.length % 4)) % 4), "=");
+
+    // Replace URL-safe characters
+    const base64 = padded.replace(/-/g, "+").replace(/_/g, "/");
+
+    try {
+      return atob(base64);
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -139,7 +163,7 @@ export class EmbeddedWidget {
     this.dialog.classList.add("airbyte-widget-dialog");
 
     // Create iframe
-    this.iframe.setAttribute("src", this.iframeSrc);
+    this.iframe.setAttribute("src", this.decodedToken.widgetUrl);
     this.iframe.setAttribute("frameborder", "0");
     this.iframe.setAttribute("allow", "fullscreen");
     this.iframe.classList.add("airbyte-widget-iframe");
@@ -147,15 +171,38 @@ export class EmbeddedWidget {
 
     // Post token to iframe when it loads
     this.iframe.addEventListener("load", () => {
-      const iframeOrigin = new URL(this.iframeSrc).origin;
-      this.iframe.contentWindow?.postMessage({ scopedAuthToken: this.token }, iframeOrigin);
+      const iframeOrigin = new URL(this.decodedToken.widgetUrl).origin;
+
+      // Wait a moment to ensure the iframe is fully initialized
+      setTimeout(() => {
+        const message = { scopedAuthToken: this.decodedToken.token };
+
+        try {
+          // Try posting the message with the token
+          this.iframe.contentWindow?.postMessage(message, iframeOrigin);
+
+          // Also try with wildcard origin as fallback for CORS issues
+          this.iframe.contentWindow?.postMessage(message, "*");
+        } catch (error) {}
+      }, 500); // Short delay to ensure iframe is ready
     });
 
     // Listen for messages from the iframe
-    const iframeOrigin = new URL(this.iframeSrc).origin;
+    const iframeOrigin = new URL(this.decodedToken.widgetUrl).origin;
+
     window.addEventListener("message", (event) => {
-      // Only accept messages from the iframe's origin
-      if (event.origin !== iframeOrigin) return;
+      // Ensure the message is coming from the iframe we created
+      // Either match the origin or check the source is our iframe window
+      const isFromIframe = event.origin === iframeOrigin || event.source === this.iframe.contentWindow;
+
+      if (!isFromIframe) {
+        return;
+      }
+
+      // Check if the message is from ourselves (localhost)
+      if (event.origin === window.location.origin && event.source === window) {
+        return;
+      }
 
       // Pass the event to the callback if provided
       if (this.onEvent && event.data?.type) {
