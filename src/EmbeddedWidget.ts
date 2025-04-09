@@ -1,5 +1,4 @@
 export interface EmbeddedWidgetConfig {
-  iframeSrc: string;
   token: string;
   hideButton?: boolean;
   onEvent?: (event: WidgetEvent) => void;
@@ -12,16 +11,38 @@ export type WidgetEvent = {
 
 export class EmbeddedWidget {
   private token: string;
-  private iframeSrc: string;
+  private decodedToken: any;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
   private onEvent?: (event: WidgetEvent) => void;
+  private iframeSrc: string;
 
   constructor(config: EmbeddedWidgetConfig) {
     this.token = config.token;
-    this.iframeSrc = config.iframeSrc;
     this.onEvent = config.onEvent;
+    this.decodedToken = this.decodeToken(config.token);
+
+    // Extract iframe URL from the decoded token
+    if (this.decodedToken && this.decodedToken.url) {
+      this.iframeSrc = this.decodedToken.url;
+    } else {
+      console.error("No URL found in decoded token");
+      this.iframeSrc = ""; // Provide a fallback or empty string
+    }
+
     this.initialize(config.hideButton);
+  }
+
+  private decodeToken(token: string): any {
+    try {
+      // Decode base64 token to a string
+      const decoded = atob(token);
+      // Parse the decoded string as JSON
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error("Failed to decode token:", error);
+      return null;
+    }
   }
 
   private initialize(hideButton = false): void {
@@ -118,7 +139,7 @@ export class EmbeddedWidget {
     this.dialog.classList.add("airbyte-widget-dialog");
 
     // Create iframe
-    this.iframe.setAttribute("src", encodeURI(this.iframeSrc));
+    this.iframe.setAttribute("src", this.iframeSrc);
     this.iframe.setAttribute("frameborder", "0");
     this.iframe.setAttribute("allow", "fullscreen");
     this.iframe.classList.add("airbyte-widget-iframe");
