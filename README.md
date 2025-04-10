@@ -77,6 +77,9 @@ import { EmbeddedWidget } from "airbyte-embedded-widget";
 const widget = new EmbeddedWidget({
   token: res.token,
 });
+
+// Mount the widget
+widget.mount("#widget-container");
 ```
 
 ## Demo Application
