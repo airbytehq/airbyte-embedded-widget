@@ -33,39 +33,8 @@
 
       async function initializeWidget() {
         try {
-          // Show loading state
-          loadingEl.style.display = "block";
-          errorEl.textContent = "";
-
-          console.log("Fetching token with credentials:", {
-            client_id: import.meta.env.VITE_AB_API_CLIENT_ID || "",
-            client_secret: import.meta.env.VITE_AB_API_CLIENT_SECRET || "",
-          });
-
-          // Note: This should be an API call from the customer's backend server, not in the client directly
-          const response = await fetch(`${import.meta.env.VITE_AB_BASE_URL}/api/v1/applications/token`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              client_id: import.meta.env.VITE_AB_API_CLIENT_ID,
-              client_secret: import.meta.env.VITE_AB_API_CLIENT_SECRET,
-            }),
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to fetch token: ${response.status} ${response.statusText}\n${errorText}`);
-          }
-
-          const { access_token } = await response.json();
-          console.log("Received token:", access_token);
-          const allowedOrigin = new URL(import.meta.env.VITE_AB_BASE_URL).origin;
-
           new EmbeddedWidget({
-            iframeSrc: `${import.meta.env.VITE_AB_BASE_URL}/widget?workspaceId=123&organizationId=456&allowedOrigin=${allowedOrigin}`,
-            token: access_token,
+            token: import.meta.env.VITE_AB_EMBEDDED_TOKEN,
           });
 
           // Hide loading state on success

@@ -18,6 +18,7 @@ export class EmbeddedWidget {
   constructor(config: EmbeddedWidgetConfig) {
     this.onEvent = config.onEvent;
     this.decodedToken = this.decodeToken(config.token);
+
     this.initialize(config.hideButton);
   }
 
@@ -163,29 +164,12 @@ export class EmbeddedWidget {
     this.dialog.classList.add("airbyte-widget-dialog");
 
     // Create iframe
+
     this.iframe.setAttribute("src", this.decodedToken.widgetUrl);
     this.iframe.setAttribute("frameborder", "0");
     this.iframe.setAttribute("allow", "fullscreen");
     this.iframe.classList.add("airbyte-widget-iframe");
     this.dialog.appendChild(this.iframe);
-
-    // Post token to iframe when it loads
-    this.iframe.addEventListener("load", () => {
-      const iframeOrigin = new URL(this.decodedToken.widgetUrl).origin;
-
-      // Wait a moment to ensure the iframe is fully initialized
-      setTimeout(() => {
-        const message = { scopedAuthToken: this.decodedToken.token };
-
-        try {
-          // Try posting the message with the token
-          this.iframe.contentWindow?.postMessage(message, iframeOrigin);
-
-          // Also try with wildcard origin as fallback for CORS issues
-          this.iframe.contentWindow?.postMessage(message, "*");
-        } catch (error) {}
-      }, 500); // Short delay to ensure iframe is ready
-    });
 
     // Listen for messages from the iframe
     const iframeOrigin = new URL(this.decodedToken.widgetUrl).origin;
@@ -204,8 +188,18 @@ export class EmbeddedWidget {
         return;
       }
 
+      if (event.data === "auth_token_request") {
+        const message = { scopedAuthToken: this.decodedToken.token };
+
+        try {
+          this.iframe.contentWindow?.postMessage(message, iframeOrigin);
+        } catch (error) {
+          console.debug("Error posting message to iframe:", error);
+        }
+      }
+
       // Pass the event to the callback if provided
-      if (this.onEvent && event.data?.type) {
+      if (this.onEvent && event.data && event.data.type) {
         this.onEvent(event.data as WidgetEvent);
       }
     });
