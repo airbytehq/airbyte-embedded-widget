@@ -9,8 +9,13 @@ export type WidgetEvent = {
   data: any;
 };
 
+interface EmbeddedToken {
+  token: string;
+  widgetUrl: string;
+}
+
 export class EmbeddedWidget {
-  private decodedToken: any;
+  private decodedToken: EmbeddedToken;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
   private onEvent?: (event: WidgetEvent) => void;
@@ -22,16 +27,16 @@ export class EmbeddedWidget {
     this.initialize(config.hideButton);
   }
 
-  private decodeToken(token: string): any {
+  private decodeToken(token: string): EmbeddedToken {
     if (!token) {
-      return null;
+      return { token: "", widgetUrl: "" };
     }
 
     try {
       const decoded = this.decodeBase64(token);
       return JSON.parse(decoded);
     } catch (error) {
-      return null;
+      return { token: "", widgetUrl: "" };
     }
   }
 
