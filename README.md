@@ -1,6 +1,6 @@
 # Airbyte Embedded Widget
 
-A lightweight, embeddable widget for integrating Airbyte's data synchronization capabilities into your application.
+An embeddable widget for integrating Airbyte's data synchronization capabilities into your application.
 
 ## Features
 
@@ -34,7 +34,7 @@ pnpm install
 pnpm dev
 ```
 
-The demo server will start at `https://localhost:3000`. You may need to accept the self-signed certificate warning in your browser.
+The demo server will start at `https://localhost:3003`. You may need to accept the self-signed certificate warning in your browser.
 
 ## Building the Library
 
@@ -48,22 +48,33 @@ The built files will be in the `dist` directory.
 
 ## Usage
 
-To use this library, you will first need to fetch a token and the iframe src
+To use this library, you will first need to fetch an Airbyte Embedded token. You should do this in your server, though if you are simply testing this locally, you can use:
 
 ```
-TODO!
+curl --location '$AIRBYTE_BASE_URL/api/public/v1/embedded/widget' \
+--header 'Content-Type: application/json' \
+--header 'Accept: text/plain' \
+--data '{
+  "workspaceId": "$CUSTOMER_WORKSPACE_ID",
+  "allowedOrigin": "$EMBEDDING_ORIGIN"
+}'
 ```
 
-This will generate a scoped token such that an end user will be able to create Airbyte source configurations within the workspace you have created for them.
+`AIRBYTE_BASE_URL`: where your Airbyte instance is deployed
+`CUSTOMER_WORKSPACE_ID`: the workspace you have associated with this customer
+`EMBEDDING_ORIGIN` here refers to where you are adding this widget to. It will be used to generate an `allowedOrigin` parameter for the webapp to open communications with the widget. If you are running the widget locally using our demo app, the allowed origin should be `https://localhost:3003`, for example.
 
-These values should then be passed to where you initializze the widget like so:
+You can also, optionally, send an `externalUserId` in your request and we will attach it to the jwt encoded within the Airbyte Embedded token for provenance purposes.
+
+Embedded tokens are short-lived (15-minutes) and only allow an end user to create and edit Airbyte source configurations within the workspace you have created for them.
+
+These values should be passed to where you initializze the widget like so:
 
 ```typescript
 import { EmbeddedWidget } from "airbyte-embedded-widget";
 
 // Initialize the widget
 const widget = new EmbeddedWidget({
-  iframeSrc: res.iframeSrc,
   token: res.token,
 });
 ```
@@ -80,12 +91,12 @@ The demo application in the `/demo` directory shows a complete example of integr
 To configure the demo, create a `.env` file in the `/demo` directory:
 
 ```env
-VITE_AB_BASE_URL=https://your-airbyte-instance.com
-VITE_AB_API_CLIENT_ID=your_client_id
-VITE_AB_API_CLIENT_SECRET=your_client_secret
+VITE_AB_EMBEDDED_TOKEN=""
 ```
 
-The widget will automatically fetch a token using these credentials and initialize with the correct configuration.
+You can fetch an Airbyte Embedded token using the curl request example above.
+
+You can then run the demo app using `pnpm dev` and access a very simple example UI at `https://localhost:3003` in your browser.
 
 ## Publishing
 
