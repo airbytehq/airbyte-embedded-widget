@@ -28,29 +28,8 @@ export class EmbeddedWidget {
     }
 
     try {
-      // Check if the token is in JWT format (contains two dots)
-      if (token.split(".").length === 3) {
-        const payloadBase64 = token.split(".")[1];
-
-        // Decode the payload part (second segment)
-        const decodedPayload = this.decodeBase64(payloadBase64);
-
-        try {
-          return JSON.parse(decodedPayload);
-        } catch (parseError) {
-          return null;
-        }
-      }
-
-      // Try plain base64 decode
       const decoded = this.decodeBase64(token);
-
-      try {
-        return JSON.parse(decoded);
-      } catch (parseError) {
-        // If it's not JSON, return the string itself
-        return { rawDecodedValue: decoded };
-      }
+      return JSON.parse(decoded);
     } catch (error) {
       return null;
     }
