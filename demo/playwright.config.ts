@@ -1,8 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
-import { loadEnv } from "vite";
+import dotenv from "dotenv";
+import path from "path";
+import fs from "fs";
 
-// Load test environment variables
-const env = loadEnv("test", process.cwd(), "");
+// Read from ".env" file.
+dotenv.config({ path: path.resolve(__dirname, ".env.test") });
 
 export default defineConfig({
   testDir: "./tests",
@@ -12,8 +14,10 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "https://localhost:3000",
+    baseURL: "https://localhost:3003",
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "on-first-retry",
     ignoreHTTPSErrors: true,
   },
   projects: [
@@ -24,17 +28,18 @@ export default defineConfig({
   ],
   webServer: {
     command: "NODE_ENV=test pnpm dev",
-    url: "https://localhost:3000",
+    url: "https://localhost:3003",
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 120 seconds
-    ignoreHTTPSErrors: true,
+    stdout: "pipe",
+    stderr: "pipe",
+    timeout: 60000,
     env: {
+      // Set NODE_ENV for the server process
       NODE_ENV: "test",
-      VITE_AB_BASE_URL: env.VITE_AB_BASE_URL,
-      VITE_AB_API_CLIENT_ID: env.VITE_AB_API_CLIENT_ID,
-      VITE_AB_API_CLIENT_SECRET: env.VITE_AB_API_CLIENT_SECRET,
-      VITE_AB_WORKSPACE_ID: env.VITE_AB_WORKSPACE_ID,
-      VITE_AB_ORGANIZATION_ID: env.VITE_AB_ORGANIZATION_ID,
+
+      // Forward all VITE_ variables from process.env
+      ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith("VITE_"))),
     },
+    ignoreHTTPSErrors: true,
   },
 });

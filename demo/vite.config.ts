@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [basicSsl()],
     server: {
-      port: 3000,
+      port: 3003,
       https: {},
     },
     define: {
