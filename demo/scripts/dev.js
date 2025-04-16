@@ -43,7 +43,7 @@ function manipulateEmbeddedToken(token) {
 
     console.log("Modifying token with admin token from .env");
     // Allow optionally overriding the embedded scoped token with an instance admin one
-    decodedToken.token = process.env.AB_ADMIN_TOKEN ?? decodedToken.token;
+    decodedToken.token = process.env.VITE_AB_ADMIN_TOKEN ?? decodedToken.token;
 
     // Log the modified widget URL
     console.log("Modified widget URL:", decodedToken.widgetUrl);
