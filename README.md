@@ -24,18 +24,6 @@ yarn install
 - `/src` - The widget library source code
 - `/demo` - A demo application showcasing the widget usage
 
-## Development
-
-The project includes a demo application to showcase and test the widget. To run the demo:
-
-```bash
-cd demo
-pnpm install
-pnpm dev
-```
-
-The demo server will start at `https://localhost:3003`. You may need to accept the self-signed certificate warning in your browser.
-
 ## Building the Library
 
 To build the widget library:
@@ -50,7 +38,7 @@ The built files will be in the `dist` directory.
 
 To use this library, you will first need to fetch an Airbyte Embedded token. You should do this in your server, though if you are simply testing this locally, you can use:
 
-```
+```bash
 curl --location '$AIRBYTE_BASE_URL/api/public/v1/embedded/widget' \
 --header 'Content-Type: application/json' \
 --header 'Accept: text/plain' \
@@ -100,6 +88,23 @@ VITE_AB_EMBEDDED_TOKEN=""
 You can fetch an Airbyte Embedded token using the curl request example above.
 
 You can then run the demo app using `pnpm dev` and access a very simple example UI at `https://localhost:3003` in your browser.
+
+## Development
+
+To develop with the widget running against a locally running version of the Airbyte webapp, you can run
+
+```bash
+cd demo
+pnpm dev:local
+```
+
+and add the following to a .env file within `demo`:
+
+```env
+VITE_AB_EMBEDDED_TOKEN="your_embedded_token"
+AB_WEBAPP_URL="your_locally_running_webapp_url"
+VITE_AB_ADMIN_TOKEN="your_instance_admin_auth_token" # optional, allows for developing with a longer lived token
+```
 
 ## Publishing
 
