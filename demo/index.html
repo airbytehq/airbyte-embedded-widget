@@ -14,28 +14,100 @@
         color: red;
         margin-top: 1rem;
       }
-      #app {
-        min-height: 200px;
+      .code {
+        font-family: monospace;
+        font-weight: 600;
       }
     </style>
   </head>
   <body>
-    <h1>Airbyte Widget Demo</h1>
     <div id="app">
+      <h1>Airbyte Widget Demo</h1>
+      <p>
+        This is a demo application of the Airbyte Embedded widget. Make sure you have the following environment variables
+        set in <span class="code">/demo/.env</span> before running it:
+        <ul>
+          <li><span class="code">VITE_AB_ORGANIZATION_ID</span> - Your Airbyte organization ID</li>
+          <li><span class="code">VITE_AB_WORKSPACE_ID</span> - Your Airbyte workspace ID</li>
+          <li><span class="code">VITE_AB_CLIENT_ID</span> - Your Airbyte client_id</li>
+          <li><span class="code">VITE_AB_CLIENT_SECRET</span> - Your Airbyte client_secret</li>
+        </ul>
+      </p>
+      <p>This demo uses these environment variables to fetch and refresh a scoped access token for the widget. In a
+      production application, the <span class="code">client_id</span> and <span class="code">client_secret</span> should not be exposed to your web application.</p>
       <div id="loading" class="loading">Loading widget...</div>
       <div id="error" class="error"></div>
     </div>
     <script type="module">
-      import { EmbeddedWidget } from "@airbyte-embedded/airbyte-embedded-widget";
+      import { EmbeddedWidget } from "../src/EmbeddedWidget.ts";
 
       const loadingEl = document.getElementById("loading");
       const errorEl = document.getElementById("error");
 
+      async function getAdminToken() {
+        const response = await fetch("https://local.airbyte.dev/api/public/v1/applications/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            client_id: import.meta.env.VITE_AB_CLIENT_ID,
+            client_secret: import.meta.env.VITE_AB_CLIENT_SECRET,
+            "grant-type": "client_credentials",
+          }),
+        });
+        const { access_token } = await response.json();
+
+        return access_token;
+      }
+
+      async function getScopedToken() {
+        const access_token = await getAdminToken();
+        const response = await fetch("https://local.airbyte.dev/api/public/v1/embedded/widget?debug", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify({
+            workspaceId: import.meta.env.VITE_AB_WORKSPACE_ID,
+            organizationId: import.meta.env.VITE_AB_ORGANIZATION_ID,
+            allowedOrigin: window.location.origin,
+          }),
+        });
+        const token = await response.json();
+        return token;
+      }
+
       async function initializeWidget() {
         try {
-          new EmbeddedWidget({
-            token: import.meta.env.VITE_AB_EMBEDDED_TOKEN,
+          const overriddenToken = await getScopedTokenWithOverrides();
+          const widget = new EmbeddedWidget({
+            token: overriddenToken,
           });
+
+          async function getScopedTokenWithOverrides() {
+            const { widgetUrl, token } = await getScopedToken();
+            const originalWidgetUrl = new URL(widgetUrl);
+            const newWidgetUrl = new URL(
+              `${import.meta.env.VITE_AB_WEBAPP_URL}${originalWidgetUrl.pathname.toString()}?${originalWidgetUrl.searchParams.toString()}`
+            );
+            const newEncodedToken = btoa(
+              JSON.stringify({
+                widgetUrl: newWidgetUrl.toString(),
+                token,
+              })
+            );
+            return newEncodedToken;
+          }
+
+          async function refreshToken() {
+            const token = await getScopedTokenWithOverrides();
+            widget.updateToken(token);
+            console.log("Token refreshed:", token);
+          }
+
+          window.setInterval(getScopedTokenWithOverrides, 60_000);
 
           // Hide loading state on success
           loadingEl.style.display = "none";

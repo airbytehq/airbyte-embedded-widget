@@ -211,4 +211,16 @@ export class EmbeddedWidget {
   public open(): void {
     this.dialog.showModal();
   }
+
+  public updateToken(token: string): void {
+    this.decodedToken = this.decodeToken(token);
+    const iframeOrigin = new URL(this.decodedToken.widgetUrl).origin;
+    const message = { scopedAuthToken: this.decodedToken.token };
+
+    try {
+      this.iframe.contentWindow?.postMessage(message, iframeOrigin);
+    } catch (error) {
+      console.debug("Error sending updated token to iframe:", error);
+    }
+  }
 }
