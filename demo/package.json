@@ -2,8 +2,7 @@
   "name": "airbyte-embedded-widget-demo",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "dev:local": "node scripts/dev.js",
+    "start": "vite",
     "test": "playwright test",
     "test:ui": "playwright test --ui"
   },
