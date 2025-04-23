@@ -55,7 +55,7 @@ export class EmbeddedWidget {
   }
 
   private initialize(hideButton = false): void {
-    // Add font import
+    // Add font import for button
     const fontLink = document.createElement("link");
     fontLink.rel = "stylesheet";
     fontLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
@@ -68,18 +68,16 @@ export class EmbeddedWidget {
         padding: 0;
         border: none;
         border-radius: 10px;
-        box-shadow: 0 10px 19px hsla(241, 51%, 20%, 16%);
-        max-width: 90vw;
-        max-height: 90vh;
-        width: 1200px;
-        height: 800px;
-        background: white;
-        font-family: Inter, Helvetica, Arial, sans-serif;
+        width: 500px;
+        height: 722px;
+        background: none;
+        position: relative;
+        overflow: hidden;
       }
 
       .airbyte-widget-dialog::backdrop {
-        background: hsla(241, 51%, 20%, 50%);
-        backdrop-filter: blur(4px);
+        background-color: hsl(241, 51%, 20%);
+        opacity: 60%;
       }
 
       .airbyte-widget-button {
@@ -113,33 +111,6 @@ export class EmbeddedWidget {
       .airbyte-widget-button:focus-visible {
         outline: 3px solid hsl(240, 100%, 98%);
       }
-
-      .airbyte-widget-iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        border-radius: 10px;
-      }
-
-      .airbyte-widget-close {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        background-color: transparent;
-        color: hsl(240, 13%, 72%);
-        box-shadow: none;
-        padding: 0;
-        height: 32px;
-      }
-
-      .airbyte-widget-close:hover {
-        color: hsl(240, 10%, 59%);
-        background-color: transparent;
-      }
-
-      .airbyte-widget-close:active {
-        color: hsl(240, 10%, 59%);
-      }
     `;
     document.head.appendChild(style);
 
@@ -148,11 +119,12 @@ export class EmbeddedWidget {
     this.dialog.classList.add("airbyte-widget-dialog");
 
     // Create iframe
-
     this.iframe.setAttribute("src", this.decodedToken.widgetUrl);
     this.iframe.setAttribute("frameborder", "0");
     this.iframe.setAttribute("allow", "fullscreen");
-    this.iframe.classList.add("airbyte-widget-iframe");
+    this.iframe.style.width = "100%";
+    this.iframe.style.height = "100%";
+    this.iframe.style.border = "none";
     this.dialog.appendChild(this.iframe);
 
     // Listen for messages from the iframe
@@ -182,6 +154,11 @@ export class EmbeddedWidget {
         }
       }
 
+      // Handle close dialog message from the webapp
+      if (event.data && event.data === "CLOSE_DIALOG") {
+        this.dialog.close();
+      }
+
       // Pass the event to the callback if provided
       if (this.onEvent && event.data && event.data.type) {
         this.onEvent(event.data as WidgetEvent);
@@ -196,13 +173,6 @@ export class EmbeddedWidget {
       button.addEventListener("click", () => this.open());
       document.body.appendChild(button);
     }
-
-    // Add close button to dialog
-    const closeButton = document.createElement("button");
-    closeButton.textContent = "Close";
-    closeButton.classList.add("airbyte-widget-button", "airbyte-widget-close");
-    closeButton.addEventListener("click", () => this.dialog.close());
-    this.dialog.appendChild(closeButton);
 
     // Add dialog to document
     document.body.appendChild(this.dialog);

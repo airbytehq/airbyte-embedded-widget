@@ -12,10 +12,8 @@ describe("EmbeddedWidget", () => {
   let mockShowModal: jest.Mock;
   let mockClose: jest.Mock;
   let mockButton: HTMLButtonElement;
-  let mockCloseButton: HTMLButtonElement;
   let mockIframe: HTMLIFrameElement;
   let originalCreateElement: typeof document.createElement;
-  let buttonCount = 0;
 
   /**
    * The tests below are minimal due to limitations in jsdom's implementation of:
@@ -25,9 +23,6 @@ describe("EmbeddedWidget", () => {
    */
 
   beforeEach(() => {
-    // Reset button count
-    buttonCount = 0;
-
     // Store original createElement
     originalCreateElement = document.createElement;
 
@@ -50,15 +45,6 @@ describe("EmbeddedWidget", () => {
     mockButton.addEventListener = jest.fn((event, handler: EventListener) => {
       if (event === "click") {
         mockButton.onclick = handler as (ev: MouseEvent) => any;
-      }
-    });
-
-    mockCloseButton = originalCreateElement.call(document, "button");
-    mockCloseButton.textContent = "Close";
-    mockCloseButton.classList.add("airbyte-widget-button", "airbyte-widget-close");
-    mockCloseButton.addEventListener = jest.fn((event, handler: EventListener) => {
-      if (event === "click") {
-        mockCloseButton.onclick = handler as (ev: MouseEvent) => any;
       }
     });
 
@@ -85,19 +71,24 @@ describe("EmbeddedWidget", () => {
       src: "https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003",
       frameBorder: "0",
       allow: "fullscreen",
+      style: {
+        width: "",
+        height: "",
+        border: "",
+      },
       classList: {
         add: jest.fn(),
-        contains: jest.fn().mockReturnValue(true),
+        contains: jest.fn((className) => {
+          if (className === "airbyte-widget-iframe") return true;
+          return false;
+        }),
       },
     } as unknown as HTMLIFrameElement;
 
     // Mock document.createElement
     document.createElement = jest.fn((tagName: string) => {
       if (tagName === "dialog") return mockDialog;
-      if (tagName === "button") {
-        buttonCount++;
-        return buttonCount === 1 ? mockButton : mockCloseButton;
-      }
+      if (tagName === "button") return mockButton;
       if (tagName === "iframe") return mockIframe;
       return originalCreateElement.call(document, tagName);
     });
@@ -111,7 +102,6 @@ describe("EmbeddedWidget", () => {
     // Mock querySelector
     jest.spyOn(document, "querySelector").mockImplementation((selector: string) => {
       if (selector === "button") return mockButton;
-      if (selector === "button.airbyte-widget-close") return mockCloseButton;
       if (selector === "iframe") return mockIframe;
       return null;
     });
@@ -175,9 +165,16 @@ describe("EmbeddedWidget", () => {
     expect(mockShowModal).toHaveBeenCalled();
   });
 
-  test("closes dialog when close button is clicked", () => {
-    const closeButton = document.querySelector("button.airbyte-widget-close") as HTMLButtonElement;
-    closeButton.onclick?.({} as MouseEvent);
+  test("closes dialog when CLOSE_DIALOG message is received", () => {
+    // Simulate receiving the CLOSE_DIALOG message
+    const messageEvent = new MessageEvent("message", {
+      data: "CLOSE_DIALOG",
+      origin: "https://foo.airbyte.com",
+      source: mockIframe.contentWindow as Window,
+    });
+    window.dispatchEvent(messageEvent);
+
+    // Verify that the dialog's close method was called
     expect(mockClose).toHaveBeenCalled();
   });
 });
