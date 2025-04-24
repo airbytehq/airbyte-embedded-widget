@@ -6,12 +6,11 @@
     "test:ui": "playwright test --ui"
   },
   "license": "UNLICENSED",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@playwright/test": "^1.42.1",
     "@types/node": "^22.13.14",
     "prettier": "^3.5.3",
-    "typescript": "^5.3.3",
+    "typescript": "^5.3.3"
   }
 }
