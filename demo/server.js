@@ -16,14 +16,11 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "localhost";
 app.get("/api/widget", async (req, res) => {
 
   try {
-    console.log("CLIENT_ID", CLIENT_ID);
-    console.log("CLIENT_SECRET", CLIENT_SECRET);
     const access_key_body = JSON.stringify({
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       "grant-type": "client_credentials",
     });
-    console.log("access_key_body", access_key_body);
     const access_key_response = await (await fetch(AIRBYTE_ACCESS_KEY_URL, {
       method: "POST",
       headers: {
@@ -32,10 +29,8 @@ app.get("/api/widget", async (req, res) => {
       },
       body: access_key_body,
     })).json();
-    console.log("access_key_response", access_key_response);
 
     const access_key = await access_key_response.access_token;
-    console.log("access key", access_key);
 
     const widget_token_response = await fetch(AIRBYTE_WIDGET_URL, {
       method: "POST",
