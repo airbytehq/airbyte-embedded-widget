@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Airbyte Embedded Widget</title>
+  </head>
+  <body>
+    <div id="widget-container"></div>
+
+    <script type="module">
+      import { EmbeddedWidget } from "https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget@0.2.0/+esm";
+
+      window.addEventListener("load", async () => {
+
+        try {
+          const response = await fetch("http://localhost:3001/api/widget");
+          const data = await response.json();
+
+          if (!data.token) {
+            throw new Error("Missing 'token' in response");
+          }
+
+          const widget = new EmbeddedWidget({ token: data.token });
+        } catch (err) {
+          console.error("Failed to load widget:", err);
+        }
+      });
+    </script>
+  </body>
+</html>
