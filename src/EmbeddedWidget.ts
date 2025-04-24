@@ -1,28 +1,61 @@
 export interface EmbeddedWidgetConfig {
-  workspaceId: string;
-  organizationId: string;
-  baseUrl: string;
   token: string;
+  hideButton?: boolean;
+  onEvent?: (event: WidgetEvent) => void;
+}
+
+export type WidgetEvent = {
+  type: string;
+  data: any;
+};
+
+interface EmbeddedToken {
+  token: string;
+  widgetUrl: string;
 }
 
 export class EmbeddedWidget {
-  private workspaceId: string;
-  private organizationId: string;
-  private token: string;
-  private baseUrl: string;
+  private decodedToken: EmbeddedToken;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
+  private onEvent?: (event: WidgetEvent) => void;
 
   constructor(config: EmbeddedWidgetConfig) {
-    this.workspaceId = config.workspaceId;
-    this.organizationId = config.organizationId;
-    this.token = config.token;
-    this.baseUrl = config.baseUrl;
-    this.initialize();
+    this.onEvent = config.onEvent;
+    this.decodedToken = this.decodeToken(config.token);
+
+    this.initialize(config.hideButton);
   }
 
-  private initialize(): void {
-    // Add font import
+  private decodeToken(token: string): EmbeddedToken {
+    if (!token) {
+      return { token: "", widgetUrl: "" };
+    }
+
+    try {
+      const decoded = this.decodeBase64(token);
+      return JSON.parse(decoded);
+    } catch (error) {
+      return { token: "", widgetUrl: "" };
+    }
+  }
+
+  private decodeBase64(str: string): string {
+    // Make sure the base64 string is properly padded
+    const padded = str.padEnd(str.length + ((4 - (str.length % 4)) % 4), "=");
+
+    // Replace URL-safe characters
+    const base64 = padded.replace(/-/g, "+").replace(/_/g, "/");
+
+    try {
+      return atob(base64);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private initialize(hideButton = false): void {
+    // Add font import for button
     const fontLink = document.createElement("link");
     fontLink.rel = "stylesheet";
     fontLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
@@ -35,18 +68,16 @@ export class EmbeddedWidget {
         padding: 0;
         border: none;
         border-radius: 10px;
-        box-shadow: 0 10px 19px hsla(241, 51%, 20%, 16%);
-        max-width: 90vw;
-        max-height: 90vh;
-        width: 1200px;
-        height: 800px;
-        background: white;
-        font-family: Inter, Helvetica, Arial, sans-serif;
+        width: 500px;
+        height: 722px;
+        background: none;
+        position: relative;
+        overflow: hidden;
       }
 
       .airbyte-widget-dialog::backdrop {
-        background: hsla(241, 51%, 20%, 50%);
-        backdrop-filter: blur(4px);
+        background-color: hsl(241, 51%, 20%);
+        opacity: 60%;
       }
 
       .airbyte-widget-button {
@@ -80,33 +111,6 @@ export class EmbeddedWidget {
       .airbyte-widget-button:focus-visible {
         outline: 3px solid hsl(240, 100%, 98%);
       }
-
-      .airbyte-widget-iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        border-radius: 10px;
-      }
-
-      .airbyte-widget-close {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        background-color: transparent;
-        color: hsl(240, 13%, 72%);
-        box-shadow: none;
-        padding: 0;
-        height: 32px;
-      }
-
-      .airbyte-widget-close:hover {
-        color: hsl(240, 10%, 59%);
-        background-color: transparent;
-      }
-
-      .airbyte-widget-close:active {
-        color: hsl(240, 10%, 59%);
-      }
     `;
     document.head.appendChild(style);
 
@@ -115,30 +119,66 @@ export class EmbeddedWidget {
     this.dialog.classList.add("airbyte-widget-dialog");
 
     // Create iframe
-    this.iframe.setAttribute(
-      "src",
-      `${this.baseUrl}/embedded-widget?workspaceId=${this.workspaceId}&organizationId=${this.organizationId}&auth=${this.token}`
-    );
+    this.iframe.setAttribute("src", this.decodedToken.widgetUrl);
     this.iframe.setAttribute("frameborder", "0");
     this.iframe.setAttribute("allow", "fullscreen");
-    this.iframe.classList.add("airbyte-widget-iframe");
+    this.iframe.style.width = "100%";
+    this.iframe.style.height = "100%";
+    this.iframe.style.border = "none";
     this.dialog.appendChild(this.iframe);
 
-    // Create button
-    const button = document.createElement("button");
-    button.textContent = "Open Airbyte";
-    button.classList.add("airbyte-widget-button");
-    button.addEventListener("click", () => this.dialog.showModal());
+    // Listen for messages from the iframe
+    const iframeOrigin = new URL(this.decodedToken.widgetUrl).origin;
 
-    // Add close button to dialog
-    const closeButton = document.createElement("button");
-    closeButton.textContent = "Close";
-    closeButton.classList.add("airbyte-widget-button", "airbyte-widget-close");
-    closeButton.addEventListener("click", () => this.dialog.close());
-    this.dialog.appendChild(closeButton);
+    window.addEventListener("message", (event) => {
+      // Ensure the message is coming from the iframe we created
+      // Either match the origin or check the source is our iframe window
+      const isFromIframe = event.origin === iframeOrigin || event.source === this.iframe.contentWindow;
 
-    // Add elements to document
+      if (!isFromIframe) {
+        return;
+      }
+
+      // Check if the message is from ourselves (localhost)
+      if (event.origin === window.location.origin && event.source === window) {
+        return;
+      }
+
+      if (event.data === "auth_token_request") {
+        const message = { scopedAuthToken: this.decodedToken.token };
+
+        try {
+          this.iframe.contentWindow?.postMessage(message, iframeOrigin);
+        } catch (error) {
+          console.debug("Error posting message to iframe:", error);
+        }
+      }
+
+      // Handle close dialog message from the webapp
+      if (event.data && event.data === "CLOSE_DIALOG") {
+        this.dialog.close();
+      }
+
+      // Pass the event to the callback if provided
+      if (this.onEvent && event.data && event.data.type) {
+        this.onEvent(event.data as WidgetEvent);
+      }
+    });
+
+    // Create button if not hidden
+    if (!hideButton) {
+      const button = document.createElement("button");
+      button.textContent = "Open Airbyte";
+      button.classList.add("airbyte-widget-button");
+      button.addEventListener("click", () => this.open());
+      document.body.appendChild(button);
+    }
+
+    // Add dialog to document
     document.body.appendChild(this.dialog);
-    document.body.appendChild(button);
+  }
+
+  public open(): void {
+    this.dialog.showModal();
   }
 }

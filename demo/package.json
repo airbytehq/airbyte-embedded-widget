@@ -7,10 +7,17 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
   "description": "",
+  "dependencies": {
+  "license": "UNLICENSED",
   "dependencies": {
     "express": "^5.1.0",
     "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.42.1",
+    "@types/node": "^22.13.14",
+    "prettier": "^3.5.3",
+    "typescript": "^5.3.3"
   }
 }

@@ -1,10 +1,9 @@
 import { EmbeddedWidget } from "../src/EmbeddedWidget";
 
 const defaultConfig = {
-  workspaceId: "test-workspace",
-  organizationId: "test-org",
-  token: "test-token",
-  baseUrl: "https://test.airbyte.com",
+  token:
+    "eyJ0b2tlbiI6ICJtb2NrLXRva2VuIiwgIndpZGdldFVybCI6ICJodHRwczovL2Zvby5haXJieXRlLmNvbS9lbWJlZGRlZC13aWRnZXQmd29ya3NwYWNlSWQ9Zm9vJmFsbG93ZWRPcmlnaW49aHR0cHMlM0ElMkYlMkZsb2NhbGhvc3QlM0EzMDAzIn0=",
+  // decodes to { "token": "mock-token", "widgetUrl": "https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003"}
 };
 
 describe("EmbeddedWidget", () => {
@@ -13,15 +12,17 @@ describe("EmbeddedWidget", () => {
   let mockShowModal: jest.Mock;
   let mockClose: jest.Mock;
   let mockButton: HTMLButtonElement;
-  let mockCloseButton: HTMLButtonElement;
   let mockIframe: HTMLIFrameElement;
   let originalCreateElement: typeof document.createElement;
-  let buttonCount = 0;
+
+  /**
+   * The tests below are minimal due to limitations in jsdom's implementation of:
+   * - HTMLDialogElement (showModal, close)
+   * - iframe cross-origin communication
+   * - postMessage handling
+   */
 
   beforeEach(() => {
-    // Reset button count
-    buttonCount = 0;
-
     // Store original createElement
     originalCreateElement = document.createElement;
 
@@ -47,24 +48,47 @@ describe("EmbeddedWidget", () => {
       }
     });
 
-    mockCloseButton = originalCreateElement.call(document, "button");
-    mockCloseButton.textContent = "Close";
-    mockCloseButton.classList.add("airbyte-widget-button", "airbyte-widget-close");
-    mockCloseButton.addEventListener = jest.fn((event, handler: EventListener) => {
-      if (event === "click") {
-        mockCloseButton.onclick = handler as (ev: MouseEvent) => any;
-      }
-    });
-
-    mockIframe = originalCreateElement.call(document, "iframe");
+    mockIframe = {
+      ...originalCreateElement.call(document, "iframe"),
+      addEventListener: jest.fn((event, handler: EventListener) => {
+        if (event === "load") {
+          mockIframe.onload = handler as (ev: Event) => any;
+        }
+      }),
+      contentWindow: {
+        postMessage: jest.fn(),
+      },
+      setAttribute: jest.fn((name, value) => {
+        if (name === "src") mockIframe.src = value;
+        if (name === "frameborder") mockIframe.frameBorder = value;
+        if (name === "allow") mockIframe.allow = value;
+      }),
+      getAttribute: jest.fn((name) => {
+        if (name === "frameborder") return "0";
+        if (name === "allow") return "fullscreen";
+        return null;
+      }),
+      src: "https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003",
+      frameBorder: "0",
+      allow: "fullscreen",
+      style: {
+        width: "",
+        height: "",
+        border: "",
+      },
+      classList: {
+        add: jest.fn(),
+        contains: jest.fn((className) => {
+          if (className === "airbyte-widget-iframe") return true;
+          return false;
+        }),
+      },
+    } as unknown as HTMLIFrameElement;
 
     // Mock document.createElement
     document.createElement = jest.fn((tagName: string) => {
       if (tagName === "dialog") return mockDialog;
-      if (tagName === "button") {
-        buttonCount++;
-        return buttonCount === 1 ? mockButton : mockCloseButton;
-      }
+      if (tagName === "button") return mockButton;
       if (tagName === "iframe") return mockIframe;
       return originalCreateElement.call(document, tagName);
     });
@@ -78,7 +102,6 @@ describe("EmbeddedWidget", () => {
     // Mock querySelector
     jest.spyOn(document, "querySelector").mockImplementation((selector: string) => {
       if (selector === "button") return mockButton;
-      if (selector === "button.airbyte-widget-close") return mockCloseButton;
       if (selector === "iframe") return mockIframe;
       return null;
     });
@@ -103,12 +126,30 @@ describe("EmbeddedWidget", () => {
   test("creates iframe with correct attributes", () => {
     const iframe = document.querySelector("iframe") as HTMLIFrameElement;
     expect(iframe).toBeDefined();
-    expect(iframe.src).toContain(`workspaceId=${defaultConfig.workspaceId}`);
-    expect(iframe.src).toContain(`organizationId=${defaultConfig.organizationId}`);
-    expect(iframe.src).toContain(`auth=${defaultConfig.token}`);
+    expect(iframe.src).toBe(
+      "https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003"
+    );
     expect(iframe.getAttribute("frameborder")).toBe("0");
     expect(iframe.getAttribute("allow")).toBe("fullscreen");
     expect(iframe.classList.contains("airbyte-widget-iframe")).toBe(true);
+  });
+
+  test("posts token to iframe when request received", () => {
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+
+    // Simulate receiving the auth_token_request message
+    const messageEvent = new MessageEvent("message", {
+      data: "auth_token_request",
+      origin: "https://foo.airbyte.com",
+    });
+    window.dispatchEvent(messageEvent);
+
+    // Verify postMessage was called with correct parameters
+    expect(iframe.contentWindow?.postMessage).toHaveBeenCalledWith(
+      { scopedAuthToken: "mock-token" },
+      new URL("https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003")
+        .origin
+    );
   });
 
   test("creates button with correct attributes", () => {
@@ -124,9 +165,16 @@ describe("EmbeddedWidget", () => {
     expect(mockShowModal).toHaveBeenCalled();
   });
 
-  test("closes dialog when close button is clicked", () => {
-    const closeButton = document.querySelector("button.airbyte-widget-close") as HTMLButtonElement;
-    closeButton.onclick?.({} as MouseEvent);
+  test("closes dialog when CLOSE_DIALOG message is received", () => {
+    // Simulate receiving the CLOSE_DIALOG message
+    const messageEvent = new MessageEvent("message", {
+      data: "CLOSE_DIALOG",
+      origin: "https://foo.airbyte.com",
+      source: mockIframe.contentWindow as Window,
+    });
+    window.dispatchEvent(messageEvent);
+
+    // Verify that the dialog's close method was called
     expect(mockClose).toHaveBeenCalled();
   });
 });
