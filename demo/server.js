@@ -1,11 +1,30 @@
 const express = require("express");
 
+// Disable SSL verification for development
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Middleware for parsing JSON requests
+app.use(express.json());
+
+// Add CORS middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Read config from environment variables
-const AIRBYTE_WIDGET_URL = "https://api.airbyte.com/v1/embedded/widget";
-const AIRBYTE_ACCESS_KEY_URL = "https://api.airbyte.com/v1/applications/token";
+const AIRBYTE_WIDGET_URL = "https://local.airbyte.dev/api/public/v1/embedded/widget";
+const AIRBYTE_ACCESS_KEY_URL = "https://local.airbyte.dev/api/public/v1/applications/token";
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const WORKSPACE_ID = process.env.WORKSPACE_ID;
@@ -14,7 +33,6 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "localhost";
 
 // GET /api/widget → fetch widget token and return it
 app.get("/api/widget", async (req, res) => {
-
   try {
     console.log("CLIENT_ID", CLIENT_ID);
     console.log("CLIENT_SECRET", CLIENT_SECRET);
@@ -24,24 +42,30 @@ app.get("/api/widget", async (req, res) => {
       "grant-type": "client_credentials",
     });
     console.log("access_key_body", access_key_body);
-    const access_key_response = await (await fetch(AIRBYTE_ACCESS_KEY_URL, {
+    const response = await fetch(AIRBYTE_ACCESS_KEY_URL, {
       method: "POST",
       headers: {
-        "accept": "application/json",
+        Accept: "application/json",
         "Content-Type": "application/json",
       },
       body: access_key_body,
-    })).json();
-    console.log("access_key_response", access_key_response);
+    });
 
-    const access_key = await access_key_response.access_token;
-    console.log("access key", access_key);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response from Airbyte:", errorText);
+      return res.status(500).json({ error: "Failed to fetch access token" });
+    }
+
+    const access_key_response = await response.json();
+    const access_key = access_key_response.access_token;
+    console.log("access token acquired");
 
     const widget_token_response = await fetch(AIRBYTE_WIDGET_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${access_key}`,
+        Authorization: `Bearer ${access_key}`,
       },
       body: JSON.stringify({
         workspaceId: WORKSPACE_ID,
@@ -49,7 +73,6 @@ app.get("/api/widget", async (req, res) => {
         allowedOrigin: ALLOWED_ORIGIN,
       }),
     });
-
 
     if (!widget_token_response.ok) {
       const errorText = await widget_token_response.text();
@@ -64,6 +87,12 @@ app.get("/api/widget", async (req, res) => {
     console.error("Unexpected error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// POST /embedded_response → handle data from widget callback
+app.post("/api/embedded_response", (req, res) => {
+  console.log("Received embedded widget data:", req.body);
+  res.status(200).send("OK");
 });
 
 app.listen(PORT, () => {

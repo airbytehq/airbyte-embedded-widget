@@ -8,7 +8,7 @@
     <div id="widget-container"></div>
 
     <script type="module">
-      import { EmbeddedWidget } from "https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget@0.2.0/+esm";
+      import { EmbeddedWidget } from "https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget@0.3.0/+esm";
 
       window.addEventListener("load", async () => {
         try {
@@ -19,7 +19,23 @@
             throw new Error("Missing 'token' in response");
           }
 
-          const widget = new EmbeddedWidget({ token: data.token });
+          const widgetResultCallback = (result) => {
+            // Send the result data to the embedded_response endpoint
+            fetch("http://localhost:3001/api/embedded_response", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(result),
+            })
+              .then((response) => console.log("Callback response:", response.status))
+              .catch((err) => console.error("Callback error:", err));
+          };
+
+          const widget = new EmbeddedWidget({
+            token: data.token,
+            onEvent: widgetResultCallback,
+          });
         } catch (err) {
           console.error("Failed to load widget:", err);
         }
