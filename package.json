@@ -1,49 +1,16 @@
 {
-  "name": "@airbyte-embedded/airbyte-embedded-widget",
-  "version": "0.1.1",
-  "description": "Embedded widget for Airbyte",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "publishConfig": {
-    "access": "public"
-  },
+  "name": "yourapp",
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "prepare": "pnpm run build",
-    "format": "prettier --write .",
-    "lint": "prettier --check .",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "airbyte",
-    "embedded",
-    "modal",
-    "widget",
-    "sources",
-    "connectors",
-    "ui",
-    "oauth",
-    "authentication",
-    "authorization",
-    "connect",
-    "connector",
-    "connectors"
-  ],
-  "author": "Airbyte",
-  "license": "UNLICENSED",
-  "devDependencies": {
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.11.24",
-    "eslint": "^9.23.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2"
   }
 }

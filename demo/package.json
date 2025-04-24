@@ -1,17 +1,16 @@
 {
-  "name": "airbyte-embedded-widget-demo",
-  "private": true,
+  "name": "yourapp",
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
-    "test": "playwright test",
-    "test:ui": "playwright test --ui"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "license": "UNLICENSED",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.42.1",
-    "@types/node": "^22.13.14",
-    "prettier": "^3.5.3",
-    "typescript": "^5.3.3",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2"
   }
 }
