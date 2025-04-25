@@ -75,6 +75,7 @@ export class EmbeddedWidget {
         height: 800px;
         background: white;
         font-family: Inter, Helvetica, Arial, sans-serif;
+        font-size: 0;
       }
 
       .airbyte-widget-dialog::backdrop {
