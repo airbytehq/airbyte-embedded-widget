@@ -8,13 +8,28 @@
     "access": "public"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
-  "keywords": [],
+  "keywords": [
+    "airbyte",
+    "embedded",
+    "modal",
+    "widget"
+  ],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "express": "^5.1.0",
-    "node-fetch": "^3.3.2"
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.24",
+    "eslint": "^9.23.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
