@@ -152,6 +152,18 @@ describe("EmbeddedWidget", () => {
     );
   });
 
+  test("updateToken passes new token to iframe", () => {
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+    const newToken = "eyJ0b2tlbiI6Im5ldy10b2tlbiIsIndpZGdldFVybCI6Imh0dHBzOi8vbmV3LndpZGdldC5jb20ifQo=";
+    widget.updateToken(newToken);
+
+    // Verify postMessage was called with correct parameters
+    expect(iframe.contentWindow?.postMessage).toHaveBeenCalledWith(
+      { scopedAuthToken: "new-token" },
+      new URL("https://new.widget.com").origin
+    );
+  });
+
   test("creates button with correct attributes", () => {
     const button = document.querySelector("button") as HTMLButtonElement;
     expect(button).toBeDefined();
