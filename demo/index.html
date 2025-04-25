@@ -2,57 +2,44 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Airbyte Widget Demo</title>
-    <style>
-      .loading {
-        display: none;
-        color: #fff;
-        margin-top: 1rem;
-      }
-      .error {
-        color: red;
-        margin-top: 1rem;
-      }
-      #app {
-        min-height: 200px;
-      }
-    </style>
+    <title>Airbyte Embedded Widget</title>
   </head>
   <body>
-    <h1>Airbyte Widget Demo</h1>
-    <div id="app">
-      <div id="loading" class="loading">Loading widget...</div>
-      <div id="error" class="error"></div>
-    </div>
+    <div id="widget-container"></div>
+
     <script type="module">
-      import { EmbeddedWidget } from "@airbyte-embedded/airbyte-embedded-widget";
+      import { EmbeddedWidget } from "https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget@0.3.0/+esm";
 
-      const loadingEl = document.getElementById("loading");
-      const errorEl = document.getElementById("error");
-
-      async function initializeWidget() {
+      window.addEventListener("load", async () => {
         try {
-          new EmbeddedWidget({
-            token: import.meta.env.VITE_AB_EMBEDDED_TOKEN,
+          const response = await fetch("http://localhost:3001/api/widget_token");
+          const data = await response.json();
+
+          if (!data.token) {
+            throw new Error("Missing 'token' in response");
+          }
+
+          const widgetResultCallback = (result) => {
+            // Send the result data to the embedded_response endpoint
+            fetch("http://localhost:3001/api/embedded_response", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(result),
+            })
+              .then((response) => console.log("Callback response:", response.status))
+              .catch((err) => console.error("Callback error:", err));
+          };
+
+          const widget = new EmbeddedWidget({
+            token: data.token,
+            onEvent: widgetResultCallback,
           });
-
-          // Hide loading state on success
-          loadingEl.style.display = "none";
-        } catch (error) {
-          console.error("Error initializing widget:", error);
-          // Hide loading state and show error
-          loadingEl.style.display = "none";
-          errorEl.innerHTML = `
-            <p>Failed to initialize widget:</p>
-            <pre style="white-space: pre-wrap;">${error.message}</pre>
-            <p>Check console for more details.</p>
-          `;
+        } catch (err) {
+          console.error("Failed to load widget:", err);
         }
-      }
-
-      // Start initialization
-      initializeWidget();
+      });
     </script>
   </body>
 </html>

@@ -36,6 +36,8 @@ The built files will be in the `dist` directory.
 
 ## Usage
 
+### Authentication
+
 To use this library, you will first need to fetch an Airbyte Embedded token. You should do this in your server, though if you are simply testing this locally, you can use:
 
 ```bash
@@ -50,13 +52,37 @@ curl --location '$AIRBYTE_BASE_URL/api/public/v1/embedded/widget' \
 
 `AIRBYTE_BASE_URL`: where your Airbyte instance is deployed
 `CUSTOMER_WORKSPACE_ID`: the workspace you have associated with this customer
-`EMBEDDING_ORIGIN` here refers to where you are adding this widget to. It will be used to generate an `allowedOrigin` parameter for the webapp to open communications with the widget. If you are running the widget locally using our demo app, the allowed origin should be `https://localhost:3003`, for example.
+`EMBEDDING_ORIGIN` here refers to where you are adding this widget to. It will be used to generate an `allowedOrigin` parameter for the webapp to open communications with the widget.
 
 You can also, optionally, send an `externalUserId` in your request and we will attach it to the jwt encoded within the Airbyte Embedded token for provenance purposes.
 
 Embedded tokens are short-lived (15-minutes) and only allow an end user to create and edit Airbyte source configurations within the workspace you have created for them.
 
-These values should be passed to where you initializze the widget like so:
+### Event Callbacks
+
+The widget also accepts an `onEvent` function as an argument. This function, if provided, will be executed when a user completes the integration setup or update flow. These events have the following format:
+
+```typescript
+// successful events:
+{
+  type: "end_user_action_result";
+  message: "partial_user_config_created" | "partial_user_config_updated";
+  data: PartialUserConfigRead; // an object containing all data related to the user's configuration, including an actorId identifying the source created/updated
+}
+
+// errored events:
+{
+  type: "end_user_action_result";
+  message: "partial_user_config_update_error" | "partial_user_config_create_error";
+  error: Error; // an error object, including a message property
+}
+```
+
+This allows you to trigger operations based upon different types of results.
+
+### Configuration
+
+These values should be passed to where you initialize the widget like so:
 
 ```typescript
 import { EmbeddedWidget } from "airbyte-embedded-widget";
@@ -64,6 +90,7 @@ import { EmbeddedWidget } from "airbyte-embedded-widget";
 // Initialize the widget
 const widget = new EmbeddedWidget({
   token: res.token,
+  onEvent: yourEventFunction,
 });
 
 // Mount the widget
@@ -74,37 +101,9 @@ widget.mount("#widget-container");
 
 The demo application in the `/demo` directory shows a complete example of integrating the widget. It includes:
 
-- HTTPS setup with Vite
 - Environment variable configuration
 - Basic styling and layout
 - API token handling
-
-To configure the demo, create a `.env` file in the `/demo` directory:
-
-```env
-VITE_AB_EMBEDDED_TOKEN=""
-```
-
-You can fetch an Airbyte Embedded token using the curl request example above.
-
-You can then run the demo app using `pnpm dev` and access a very simple example UI at `https://localhost:3003` in your browser.
-
-## Development
-
-To develop with the widget running against a locally running version of the Airbyte webapp, you can run
-
-```bash
-cd demo
-pnpm dev:local
-```
-
-and add the following to a .env file within `demo`:
-
-```env
-VITE_AB_EMBEDDED_TOKEN="your_embedded_token"
-AB_WEBAPP_URL="your_locally_running_webapp_url"
-VITE_AB_ADMIN_TOKEN="your_instance_admin_auth_token" # optional, allows for developing with a longer lived token
-```
 
 ## Publishing
 

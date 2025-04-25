@@ -1,7 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
-import fs from "fs";
 
 // Read from ".env" file.
 dotenv.config({ path: path.resolve(__dirname, ".env.test") });
@@ -14,7 +13,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "https://localhost:3003",
+    baseURL: "http://localhost:3003",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "on-first-retry",
@@ -27,8 +26,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "NODE_ENV=test pnpm dev",
-    url: "https://localhost:3003",
+    command: "npx serve -p 3003 .",
+    url: "http://localhost:3003",
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",
