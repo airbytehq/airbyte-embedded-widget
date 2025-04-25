@@ -33,7 +33,7 @@ const ORGANIZATION_ID = process.env.ORGANIZATION_ID;
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
 
 // GET /api/widget → fetch widget token and return it
-app.get("/api/widget", async (req, res) => {
+app.get("/api/widget_token", async (req, res) => {
   try {
     const access_token_body = JSON.stringify({
       client_id: CLIENT_ID,

@@ -12,7 +12,7 @@
 
       window.addEventListener("load", async () => {
         try {
-          const response = await fetch("http://localhost:3001/api/widget");
+          const response = await fetch("http://localhost:3001/api/widget_token");
           const data = await response.json();
 
           if (!data.token) {
