@@ -222,4 +222,37 @@ describe("EmbeddedWidget", () => {
     // Verify that the dialog's close method was called
     expect(mockClose).toHaveBeenCalled();
   });
+
+  test("mount() method moves button to a different container", () => {
+    // Create a mock container element
+    const mockContainer = document.createElement("div");
+    mockContainer.id = "new-container";
+
+    // Setup spies to track removal and appending
+    const originalParentRemoveChild = jest.fn();
+    const containerAppendChild = jest.fn();
+
+    // Setup button's parent
+    const originalParent = document.createElement("div");
+    originalParent.appendChild = jest.fn();
+    originalParent.removeChild = originalParentRemoveChild;
+    Object.defineProperty(mockButton, "parentElement", {
+      get: () => originalParent,
+    });
+
+    // Setup the new container
+    mockContainer.appendChild = containerAppendChild;
+
+    // Call mount
+    widget.mount(mockContainer);
+
+    // Verify the button was removed from its original parent
+    expect(originalParentRemoveChild).toHaveBeenCalledWith(mockButton);
+
+    // Verify the button was added to the new container
+    expect(containerAppendChild).toHaveBeenCalledWith(mockButton);
+
+    // Verify the containerElement was updated
+    expect((widget as any).containerElement).toBe(mockContainer);
+  });
 });
