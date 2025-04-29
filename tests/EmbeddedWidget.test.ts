@@ -13,9 +13,6 @@ describe("EmbeddedWidget", () => {
   let mockClose: jest.Mock;
   let mockButton: HTMLButtonElement;
   let mockIframe: HTMLIFrameElement;
-  let mockDialogContent: HTMLDivElement;
-  let mockDialogContainer: HTMLDivElement;
-  let mockDialogBranding: HTMLDivElement;
   let originalCreateElement: typeof document.createElement;
 
   /**
@@ -32,19 +29,6 @@ describe("EmbeddedWidget", () => {
     // Create mock elements
     mockShowModal = jest.fn();
     mockClose = jest.fn();
-
-    // Create mock dialog elements
-    mockDialogContent = document.createElement("div") as HTMLDivElement;
-    mockDialogContent.classList.add("airbyte-widget-dialog-content");
-
-    mockDialogBranding = document.createElement("div") as HTMLDivElement;
-    mockDialogBranding.classList.add("airbyte-widget-dialog-branding");
-
-    mockDialogContainer = document.createElement("div") as HTMLDivElement;
-    mockDialogContainer.classList.add("airbyte-widget-dialog-container");
-    mockDialogContainer.appendChild(mockDialogContent);
-    mockDialogContainer.appendChild(mockDialogBranding);
-
     mockDialog = {
       showModal: mockShowModal,
       close: mockClose,
@@ -52,16 +36,7 @@ describe("EmbeddedWidget", () => {
       classList: {
         add: jest.fn(),
       },
-      appendChild: jest.fn((element) => {
-        if (element === mockDialogContainer) {
-          (mockDialog as any).firstChild = element;
-        }
-        return element;
-      }),
-      querySelector: jest.fn((selector) => {
-        if (selector === ".airbyte-widget-dialog-content") return mockDialogContent;
-        return null;
-      }),
+      appendChild: jest.fn(),
     } as unknown as HTMLDialogElement;
 
     mockButton = originalCreateElement.call(document, "button");
@@ -101,6 +76,13 @@ describe("EmbeddedWidget", () => {
         height: "",
         border: "",
       },
+      classList: {
+        add: jest.fn(),
+        contains: jest.fn((className) => {
+          if (className === "airbyte-widget-iframe") return true;
+          return false;
+        }),
+      },
     } as unknown as HTMLIFrameElement;
 
     // Mock document.createElement
@@ -108,18 +90,6 @@ describe("EmbeddedWidget", () => {
       if (tagName === "dialog") return mockDialog;
       if (tagName === "button") return mockButton;
       if (tagName === "iframe") return mockIframe;
-      if (tagName === "div" && !mockDialogContainer.parentElement) {
-        mockDialogContainer.appendChild = jest.fn((child) => child);
-        return mockDialogContainer;
-      }
-      if (tagName === "div" && mockDialogContainer.parentElement && !mockDialogContent.parentElement) {
-        mockDialogContent.appendChild = jest.fn((child) => child);
-        return mockDialogContent;
-      }
-      if (tagName === "div") {
-        mockDialogBranding.appendChild = jest.fn((child) => child);
-        return mockDialogBranding;
-      }
       return originalCreateElement.call(document, tagName);
     });
 
@@ -133,18 +103,7 @@ describe("EmbeddedWidget", () => {
     jest.spyOn(document, "querySelector").mockImplementation((selector: string) => {
       if (selector === "button") return mockButton;
       if (selector === "iframe") return mockIframe;
-      if (selector === ".airbyte-widget-dialog-content") return mockDialogContent;
       return null;
-    });
-
-    // Mock mockDialogContent.appendChild to track the iframe
-    mockDialogContent.appendChild = jest.fn() as jest.Mock & typeof mockDialogContent.appendChild;
-    // Set up the mock to store reference to iframe for testing
-    (mockDialogContent.appendChild as jest.Mock).mockImplementation((child: Node) => {
-      if (child === mockIframe) {
-        (mockDialogContent as any).child = child;
-      }
-      return child;
     });
 
     widget = new EmbeddedWidget(defaultConfig);
@@ -161,19 +120,23 @@ describe("EmbeddedWidget", () => {
 
   test("creates dialog with correct attributes", () => {
     expect(mockDialog.setAttribute).toHaveBeenCalledWith("aria-label", "Airbyte Widget");
-    expect(mockDialog.classList.add).toHaveBeenCalledWith("airbyte-widget-dialog-wrapper");
+    expect(mockDialog.classList.add).toHaveBeenCalledWith("airbyte-widget-dialog");
   });
 
   test("creates iframe with correct attributes", () => {
-    expect(mockIframe.setAttribute).toHaveBeenCalledWith(
-      "src",
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+    expect(iframe).toBeDefined();
+    expect(iframe.src).toBe(
       "https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003"
     );
-    expect(mockIframe.setAttribute).toHaveBeenCalledWith("frameborder", "0");
-    expect(mockIframe.setAttribute).toHaveBeenCalledWith("allow", "fullscreen");
+    expect(iframe.getAttribute("frameborder")).toBe("0");
+    expect(iframe.getAttribute("allow")).toBe("fullscreen");
+    expect(iframe.classList.contains("airbyte-widget-iframe")).toBe(true);
   });
 
   test("posts token to iframe when request received", () => {
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+
     // Simulate receiving the auth_token_request message
     const messageEvent = new MessageEvent("message", {
       data: "auth_token_request",
@@ -182,7 +145,7 @@ describe("EmbeddedWidget", () => {
     window.dispatchEvent(messageEvent);
 
     // Verify postMessage was called with correct parameters
-    expect(mockIframe.contentWindow?.postMessage).toHaveBeenCalledWith(
+    expect(iframe.contentWindow?.postMessage).toHaveBeenCalledWith(
       { scopedAuthToken: "mock-token" },
       new URL("https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003")
         .origin
@@ -190,23 +153,27 @@ describe("EmbeddedWidget", () => {
   });
 
   test("updateToken passes new token to iframe", () => {
+    const iframe = document.querySelector("iframe") as HTMLIFrameElement;
     const newToken = "eyJ0b2tlbiI6Im5ldy10b2tlbiIsIndpZGdldFVybCI6Imh0dHBzOi8vbmV3LndpZGdldC5jb20ifQo=";
     widget.updateToken(newToken);
 
     // Verify postMessage was called with correct parameters
-    expect(mockIframe.contentWindow?.postMessage).toHaveBeenCalledWith(
+    expect(iframe.contentWindow?.postMessage).toHaveBeenCalledWith(
       { scopedAuthToken: "new-token" },
       new URL("https://new.widget.com").origin
     );
   });
 
   test("creates button with correct attributes", () => {
-    expect(mockButton.textContent).toBe("Open Airbyte");
-    expect(mockButton.classList.contains("airbyte-widget-button")).toBe(true);
+    const button = document.querySelector("button") as HTMLButtonElement;
+    expect(button).toBeDefined();
+    expect(button.textContent).toBe("Open Airbyte");
+    expect(button.classList.contains("airbyte-widget-button")).toBe(true);
   });
 
   test("opens dialog when button is clicked", () => {
-    mockButton.onclick?.({} as MouseEvent);
+    const button = document.querySelector("button") as HTMLButtonElement;
+    button.onclick?.({} as MouseEvent);
     expect(mockShowModal).toHaveBeenCalled();
   });
 
@@ -221,38 +188,5 @@ describe("EmbeddedWidget", () => {
 
     // Verify that the dialog's close method was called
     expect(mockClose).toHaveBeenCalled();
-  });
-
-  test("mount() method moves button to a different container", () => {
-    // Create a mock container element
-    const mockContainer = document.createElement("div");
-    mockContainer.id = "new-container";
-
-    // Setup spies to track removal and appending
-    const originalParentRemoveChild = jest.fn();
-    const containerAppendChild = jest.fn();
-
-    // Setup button's parent
-    const originalParent = document.createElement("div");
-    originalParent.appendChild = jest.fn();
-    originalParent.removeChild = originalParentRemoveChild;
-    Object.defineProperty(mockButton, "parentElement", {
-      get: () => originalParent,
-    });
-
-    // Setup the new container
-    mockContainer.appendChild = containerAppendChild;
-
-    // Call mount
-    widget.mount(mockContainer);
-
-    // Verify the button was removed from its original parent
-    expect(originalParentRemoveChild).toHaveBeenCalledWith(mockButton);
-
-    // Verify the button was added to the new container
-    expect(containerAppendChild).toHaveBeenCalledWith(mockButton);
-
-    // Verify the containerElement was updated
-    expect((widget as any).containerElement).toBe(mockContainer);
   });
 });
