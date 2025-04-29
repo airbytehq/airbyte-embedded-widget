@@ -5,6 +5,7 @@
     <title>Airbyte Embedded Widget</title>
   </head>
   <body>
+    <h1>Airbyte Embedded Widget</h1>
     <div id="widget-container"></div>
 
     <script type="module">
@@ -36,6 +37,8 @@
             token: data.token,
             onEvent: widgetResultCallback,
           });
+
+          widget.mount("#widget-container");
         } catch (err) {
           console.error("Failed to load widget:", err);
         }
