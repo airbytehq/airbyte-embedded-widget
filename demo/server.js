@@ -29,12 +29,17 @@ const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const WORKSPACE_ID = process.env.WORKSPACE_ID;
-const ORGANIZATION_ID = process.env.ORGANIZATION_ID;
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:3000";
 
 // GET /api/widget → fetch widget token and return it
 app.get("/api/widget_token", async (req, res) => {
   try {
+    // Determine the allowed origin from the request
+    const origin =
+      req.headers.origin ||
+      req.headers.referer?.replace(/\/$/, "") ||
+      process.env.ALLOWED_ORIGIN ||
+      "http://localhost:3000";
+
     const access_token_body = JSON.stringify({
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
@@ -66,8 +71,7 @@ app.get("/api/widget_token", async (req, res) => {
       },
       body: JSON.stringify({
         workspaceId: WORKSPACE_ID,
-        organizationId: ORGANIZATION_ID,
-        allowedOrigin: ALLOWED_ORIGIN,
+        allowedOrigin: origin,
       }),
     });
 
@@ -78,6 +82,7 @@ app.get("/api/widget_token", async (req, res) => {
     }
 
     const widget_token = await widget_token_response.text();
+
     res.json({ token: widget_token });
   } catch (err) {
     console.error("Unexpected error:", err);

@@ -1,1 +1,1 @@
-export { EmbeddedWidget } from "./EmbeddedWidget";
+export { EmbeddedWidget, mount } from "./EmbeddedWidget";

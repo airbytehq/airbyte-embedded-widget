@@ -1,0 +1,142 @@
+import { NextRequest, NextResponse } from "next/server";
+
+// Disable SSL verification for development environments
+if (process.env.NODE_ENV !== "production") {
+  // SECURITY WARNING: This is only for development environments!
+  // Disabling SSL verification is a security risk - never do this in production.
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  console.warn(
+    "⚠️ SSL verification is disabled in development mode. This is a security risk and should never be done in production."
+  );
+}
+
+// Debug logging function that only logs in development
+const debugLog = (message: string, data?: any) => {
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[Debug] ${message}`, data || "");
+  }
+};
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://local.airbyte.dev";
+const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget`;
+const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
+const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID;
+const CLIENT_SECRET = process.env.NEXT_PUBLIC_CLIENT_SECRET;
+const WORKSPACE_ID = process.env.NEXT_PUBLIC_WORKSPACE_ID;
+
+export async function GET(request: NextRequest) {
+  try {
+    const referer = request.headers.get("referer");
+    const host = request.headers.get("host");
+
+    if (!referer || !host || !referer.includes(host)) {
+      debugLog("CSRF check failed", { referer, host });
+      return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    }
+
+    // Validate required environment variables
+    if (!CLIENT_ID) {
+      return NextResponse.json({ error: "Missing CLIENT_ID environment variable" }, { status: 500 });
+    }
+
+    if (!CLIENT_SECRET) {
+      return NextResponse.json({ error: "Missing CLIENT_SECRET environment variable" }, { status: 500 });
+    }
+
+    if (!WORKSPACE_ID) {
+      return NextResponse.json({ error: "Missing WORKSPACE_ID environment variable" }, { status: 500 });
+    }
+
+    // Get access token
+    const accessTokenBody = JSON.stringify({
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      "grant-type": "client_credentials",
+    });
+
+    const response = await fetch(AIRBYTE_ACCESS_TOKEN_URL, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: accessTokenBody,
+    });
+
+    debugLog("Response status:", response.status);
+    debugLog("Response ok:", response.ok);
+
+    if (!response.ok) {
+      return NextResponse.json({ error: "Failed to fetch access token" }, { status: 500 });
+    }
+
+    const accessTokenResponse = await response.json();
+    const accessToken = accessTokenResponse.access_token;
+
+    // Verify we have the access token before proceeding
+    if (!accessToken) {
+      return NextResponse.json({ error: "Invalid access token response" }, { status: 500 });
+    }
+
+    debugLog("Access token received");
+
+    // Determine the allowed origin from the request
+    const origin =
+      request.headers.get("origin") ||
+      request.headers.get("referer")?.replace(/\/$/, "") ||
+      process.env.NEXT_PUBLIC_ALLOWED_ORIGIN ||
+      "http://localhost:3000";
+
+    debugLog("Using origin:", origin);
+
+    const widgetTokenResponse = await fetch(AIRBYTE_WIDGET_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        workspaceId: WORKSPACE_ID,
+        allowedOrigin: origin,
+      }),
+    });
+
+    debugLog("Widget token response status:", widgetTokenResponse.status);
+
+    if (!widgetTokenResponse.ok) {
+      const errorText = await widgetTokenResponse.text();
+      debugLog("Error response:", errorText);
+      return NextResponse.json({ error: "Failed to fetch embedded token" }, { status: 500 });
+    }
+
+    const widgetToken = await widgetTokenResponse.text();
+
+    if (!!process.env.WEBAPP_URL) {
+      // Decode the base64 token for debugging (it's a JSON object)
+      try {
+        const decodedToken = JSON.parse(Buffer.from(widgetToken, "base64").toString());
+        debugLog("Decoded token:", decodedToken);
+        const tokenUrl = new URL(decodedToken.widgetUrl);
+
+        const newToken = {
+          widgetUrl: `https://localhost:3000${tokenUrl.pathname}?${tokenUrl.searchParams.toString()}`,
+          token: decodedToken.token,
+        };
+        debugLog("New token:", newToken);
+
+        // Base64 encode the newToken object
+        const encodedToken = Buffer.from(JSON.stringify(newToken)).toString("base64");
+
+        //Return the token in the response
+        return NextResponse.json({ token: encodedToken });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        debugLog("Could not decode token (may not be base64):", errorMessage);
+      }
+    }
+
+    return NextResponse.json({ token: widgetToken });
+  } catch (err) {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
