@@ -1,6 +1,6 @@
 // Public facing config - what users will see
 export interface EmbeddedWidgetConfig {
-  token?: string;
+  token: string;
   hideButton?: boolean;
   onEvent?: (event: WidgetEvent) => void;
 }
@@ -120,6 +120,10 @@ export class EmbeddedWidget {
   private button?: HTMLButtonElement;
 
   constructor(config: InternalWidgetConfig) {
+    if (!config.token) {
+      throw new Error("Token is required to initialize EmbeddedWidget");
+    }
+
     this.onEvent = config.onEvent;
     this.decodedToken = this.decodeToken(config.token);
     this.containerElement = config.containerElement;
@@ -127,11 +131,7 @@ export class EmbeddedWidget {
     this.initialize(config.hideButton);
   }
 
-  private decodeToken(token: string | undefined): EmbeddedToken {
-    if (!token) {
-      return { token: "", widgetUrl: "" };
-    }
-
+  private decodeToken(token: string): EmbeddedToken {
     try {
       // Decode base64
       // Make sure the base64 string is properly padded
@@ -144,13 +144,17 @@ export class EmbeddedWidget {
         decoded = atob(base64);
       } catch (error) {
         console.debug("Error decoding base64 string:", error);
-        return { token: "", widgetUrl: "" };
+        throw new Error("Invalid token format: could not decode base64");
       }
 
       // Parse JSON
-      return JSON.parse(decoded);
-    } catch (error) {
-      return { token: "", widgetUrl: "" };
+      const parsed = JSON.parse(decoded);
+      if (!parsed.widgetUrl) {
+        throw new Error("Invalid token: missing widgetUrl");
+      }
+      return parsed;
+    } catch (error: any) {
+      throw new Error(`Failed to decode token: ${error.message || "Unknown error"}`);
     }
   }
 
@@ -243,10 +247,14 @@ export class EmbeddedWidget {
     }
   }
 
-  public updateToken(token: string | undefined): void {
+  public updateToken(token: string): void {
+    if (!token) {
+      throw new Error("Token is required");
+    }
+
     this.decodedToken = this.decodeToken(token);
 
-    // Only proceed if we have a valid widget URL
+    // Only proceed if we have a valid widget URL (should always be true after decodeToken validation)
     if (!this.decodedToken.widgetUrl) {
       console.warn("Cannot update token: Missing widget URL");
       return;
