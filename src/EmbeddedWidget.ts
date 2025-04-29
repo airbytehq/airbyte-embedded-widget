@@ -375,23 +375,3 @@ export class EmbeddedWidget {
     this.onEvent(data as WidgetEvent);
   }
 }
-
-/**
- * Mounts a widget to a DOM element matching the provided selector
- * @param selector - CSS selector for the container element
- * @param config - Widget configuration options
- * @returns An instance of the EmbeddedWidget
- */
-export function mount(selector: string, config: EmbeddedWidgetConfig = {}): EmbeddedWidget {
-  const container = document.querySelector(selector);
-  if (!container) {
-    throw new Error(`Container element not found for selector: ${selector}`);
-  }
-
-  const widget = new EmbeddedWidget({
-    ...config,
-    containerElement: container as HTMLElement,
-  });
-
-  return widget;
-}

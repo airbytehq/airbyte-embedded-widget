@@ -36,6 +36,8 @@
             token: data.token,
             onEvent: widgetResultCallback,
           });
+
+          widget.mount("#widget-container");
         } catch (err) {
           console.error("Failed to load widget:", err);
         }
