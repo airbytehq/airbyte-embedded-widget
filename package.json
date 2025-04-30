@@ -30,7 +30,12 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "typescript": "5.8.3",
+      "@types/node": "20.17.32",
+      "eslint": "9.25.1"
+    }
   },
   "packageManager": "pnpm@9.15.9"
 }
