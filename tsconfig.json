@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["ES2021", "DOM", "DOM.Iterable", "ESNext"],
-    "types": [],
+    "lib": ["es2020", "dom", "dom.iterable", "esnext"],
+    "types": ["node"],
     "baseUrl": "src",
     "module": "ESNext",
     "skipLibCheck": true,
@@ -10,7 +10,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
