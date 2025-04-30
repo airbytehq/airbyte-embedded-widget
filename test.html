@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Airbyte Embedded Widget Test</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+      }
+      #widget-container {
+        margin-top: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Testing Airbyte Embedded Widget</h1>
+    <div id="widget-container"></div>
+
+    <!-- Local build (dev) -->
+    <script src="./dist/airbyte-embedded-widget.iife.js"></script>
+
+    <!-- Or for CDN test, comment the line above and use one below: -->
+    <!--
+  <script src="https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget"></script>
+  <script src="https://unpkg.com/@airbyte-embedded/airbyte-embedded-widget"></script>
+  -->
+
+    <script>
+      const widget = new AirbyteEmbeddedWidget({
+        token: "mock-token-here", // replace with a real one if you have it
+        onEvent: (event) => {
+          console.log("📬 Widget event received:", event);
+        },
+      });
+
+      widget.mount(document.getElementById("widget-container"));
+    </script>
+  </body>
+</html>

@@ -10,7 +10,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node", // <- changed from "bundler" for Rollup compatibility
     "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

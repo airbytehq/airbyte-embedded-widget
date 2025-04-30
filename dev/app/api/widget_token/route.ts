@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
 
     const widgetToken = await widgetTokenResponse.text();
 
-    if (!!process.env.WEBAPP_URL) {
+    if (!!process.env.NEXT_PUBLIC_WEBAPP_URL) {
       // Decode the base64 token for debugging (it's a JSON object)
       try {
         const decodedToken = JSON.parse(Buffer.from(widgetToken, "base64").toString());

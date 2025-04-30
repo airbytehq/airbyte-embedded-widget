@@ -4,37 +4,63 @@ An embeddable widget for integrating Airbyte's data synchronization capabilities
 
 ## Features
 
-Easy, lightweight integration for Airbyte Embedded customers to enable user configurations with any web application
-
-## Installation
-
-```bash
-# Using pnpm (recommended)
-pnpm install
-
-# Using npm
-npm install
-
-# Using yarn
-yarn install
-```
-
-## Project Structure
-
-- `/src` - The widget library source code
-- `/demo` - A demo application showcasing the widget usage
-
-## Building the Library
-
-To build the widget library:
-
-```bash
-pnpm build
-```
-
-The built files will be in the `dist` directory.
+Easy, lightweight integration for Airbyte Embedded customers to enable user configurations within any web application
 
 ## Usage
+
+You can use the widget in two ways:
+
+### Option 1: Via npm (React/Vue/etc.)
+
+Install the package:
+
+```bash
+pnpm add @airbyte-embedded/airbyte-embedded-widget
+# or npm install / yarn add
+```
+
+Use it in your application:
+
+```ts
+import { EmbeddedWidget } from "@airbyte-embedded/airbyte-embedded-widget";
+
+const widget = new EmbeddedWidget({
+  token: "<your-token-here>",
+  onEvent: (event) => {
+    console.log("Widget event:", event);
+  },
+});
+
+widget.mount(document.getElementById("widget-container")!);
+```
+
+---
+
+### Option 2: Via `<script>` tag (CDN)
+
+Load the widget via a CDN:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget"></script>
+<script>
+  const widget = new AirbyteEmbeddedWidget({
+    token: "<your-token-here>",
+    onEvent: (event) => {
+      console.log("Widget event:", event);
+    },
+  });
+
+  widget.mount(document.getElementById("widget-container"));
+</script>
+```
+
+You can also use `unpkg` if you prefer:
+
+```html
+<script src="https://unpkg.com/@airbyte-embedded/airbyte-embedded-widget"></script>
+```
+
+---
 
 ### Authentication
 
@@ -50,51 +76,51 @@ curl --location '$AIRBYTE_BASE_URL/api/public/v1/embedded/widget' \
 }'
 ```
 
-`AIRBYTE_BASE_URL`: where your Airbyte instance is deployed
-`CUSTOMER_WORKSPACE_ID`: the workspace you have associated with this customer
-`EMBEDDING_ORIGIN` here refers to where you are adding this widget to. It will be used to generate an `allowedOrigin` parameter for the webapp to open communications with the widget.
+- `AIRBYTE_BASE_URL`: where your Airbyte instance is deployed
+- `CUSTOMER_WORKSPACE_ID`: the workspace you have associated with this customer
+- `EMBEDDING_ORIGIN`: the origin where you're embedding the widget (used for CORS validation)
 
-You can also, optionally, send an `externalUserId` in your request and we will attach it to the jwt encoded within the Airbyte Embedded token for provenance purposes.
+You can also, optionally, send an `externalUserId` in your request and we will attach it to the JWT encoded within the Airbyte Embedded token for provenance.
 
-Embedded tokens are short-lived (15-minutes) and only allow an end user to create and edit Airbyte source configurations within the workspace you have created for them.
+Embedded tokens are short-lived (15 minutes) and only allow the user to create/edit configurations within the scoped workspace.
+
+---
 
 ### Event Callbacks
 
-The widget also accepts an `onEvent` function as an argument. This function, if provided, will be executed when a user completes the integration setup or update flow. These events have the following format:
+You can pass an `onEvent` callback to receive messages when the user completes actions in the widget:
 
-```typescript
-// successful events:
+```ts
 {
   type: "end_user_action_result";
   message: "partial_user_config_created" | "partial_user_config_updated";
-  data: PartialUserConfigRead; // an object containing all data related to the user's configuration, including an actorId identifying the source created/updated
-}
-
-// errored events:
-{
-  type: "end_user_action_result";
-  message: "partial_user_config_update_error" | "partial_user_config_create_error";
-  error: Error; // an error object, including a message property
+  data: PartialUserConfigRead;
 }
 ```
 
-This allows you to trigger operations based upon different types of results.
+Or, in case of error:
 
-### Configuration
+```ts
+{
+  type: "end_user_action_result";
+  message: "partial_user_config_update_error" | "partial_user_config_create_error";
+  error: Error;
+}
+```
 
-These values should be passed to where you initialize the widget like so:
+Use this to trigger actions like refreshing your UI or storing source IDs.
 
-```typescript
-import { EmbeddedWidget } from "airbyte-embedded-widget";
+---
 
-// Initialize the widget
+### Configuration Example
+
+```ts
 const widget = new EmbeddedWidget({
-  token: res.token,
-  onEvent: yourEventFunction,
+  token: "<your-token-here>",
+  onEvent: handleWidgetEvent,
 });
 
-// Mount the widget
-widget.mount("#widget-container");
+widget.mount(document.getElementById("widget-container"));
 ```
 
 ## Demo Application
@@ -104,6 +130,34 @@ The demo application in the `/demo` directory shows a complete example of integr
 - Environment variable configuration
 - Basic styling and layout
 - API token handling
+
+## Project Structure
+
+- `/src` - The widget library source code
+- `/demo` - A demo application showcasing the widget usage
+
+## Installation
+
+```bash
+# Using pnpm (highly recommended)
+pnpm install
+
+# Using npm
+npm install
+
+# Using yarn
+yarn install
+```
+
+## Building the Library
+
+To build the widget library:
+
+```bash
+pnpm build
+```
+
+The built files will be in the `dist` directory.
 
 ## Publishing
 
