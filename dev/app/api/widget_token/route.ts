@@ -17,7 +17,7 @@ const debugLog = (message: string, data?: any) => {
   }
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://local.airbyte.dev";
+const BASE_URL = process.env.NEXT_PUBLIC_AIRBYTE_PUBLIC_API_URL || "https://local.airbyte.dev/api/public";
 const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget`;
 const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
 const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID;
