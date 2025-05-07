@@ -15,7 +15,7 @@ export default function Home() {
       </header>
 
       <div className={styles.widgetContainer}>
-        <p className={styles.note}>The widget button will appear below after loading.</p>
+        <p className={styles.note}>Click the button below to open the Airbyte widget.</p>
         <div className={styles.buttonContainer}>
           <EmbeddedWidgetComponent onEvent={handleWidgetEvent} />
         </div>

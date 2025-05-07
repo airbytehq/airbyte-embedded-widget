@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  jest:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,11 +20,11 @@ jobs:
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
-      - name: Run Jest tests
+      - name: Run tests
         run: pnpm test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: jest-report
+          name: test-coverage
           path: coverage/
           retention-days: 30

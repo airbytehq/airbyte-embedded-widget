@@ -1,18 +1,12 @@
 // Public facing config - what users will see
 export interface EmbeddedWidgetConfig {
   token: string;
-  hideButton?: boolean;
   onEvent?: (event: WidgetEvent) => void;
 }
 
 export interface WidgetEvent {
   type: string;
   data: any;
-}
-
-// Internal config used by the class
-interface InternalWidgetConfig extends EmbeddedWidgetConfig {
-  containerElement?: HTMLElement;
 }
 
 interface EmbeddedToken {
@@ -77,38 +71,6 @@ const WIDGET_STYLES = `
   background-color: hsl(241, 51%, 20%);
   opacity: 0.6;
 }
-
-.airbyte-widget-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1.2;
-  color: white;
-  border-radius: 8px;
-  border: 0;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.2s ease-in;
-  white-space: nowrap;
-  background-color: hsl(241, 100%, 68%);
-  padding: 10px 12px;
-  height: 42px;
-  box-shadow: none;
-  font-family: Inter, Helvetica, Arial, sans-serif;
-}
-
-.airbyte-widget-button:hover {
-  background-color: hsl(243, 96%, 61%);
-}
-
-.airbyte-widget-button:active {
-  background-color: hsl(245, 85%, 56%);
-}
-
-.airbyte-widget-button:focus-visible {
-  outline: 3px solid hsl(240, 100%, 98%);
-}
 `;
 
 export class EmbeddedWidget {
@@ -116,19 +78,16 @@ export class EmbeddedWidget {
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
   private onEvent?: (event: WidgetEvent) => void;
-  private containerElement?: HTMLElement;
-  private button?: HTMLButtonElement;
 
-  constructor(config: InternalWidgetConfig) {
+  constructor(config: EmbeddedWidgetConfig) {
     if (!config.token) {
       throw new Error("Token is required to initialize EmbeddedWidget");
     }
 
     this.onEvent = config.onEvent;
     this.decodedToken = this.decodeToken(config.token);
-    this.containerElement = config.containerElement;
 
-    this.initialize(config.hideButton);
+    this.initialize();
   }
 
   private decodeToken(token: string): EmbeddedToken {
@@ -158,26 +117,16 @@ export class EmbeddedWidget {
     }
   }
 
-  private initialize(hideButton = false): void {
+  private initialize(): void {
     this.setupStyles();
     this.createDialogStructure();
     this.setupIframe();
-
-    if (!hideButton) {
-      this.createButton();
-    }
 
     // Add dialog to document
     document.body.appendChild(this.dialog);
   }
 
   private setupStyles(): void {
-    // Add font import for button
-    const fontLink = document.createElement("link");
-    fontLink.rel = "stylesheet";
-    fontLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
-    document.head.appendChild(fontLink);
-
     // Add styles
     const style = document.createElement("style");
     style.textContent = WIDGET_STYLES;
@@ -233,20 +182,6 @@ export class EmbeddedWidget {
     }
   }
 
-  private createButton(): void {
-    this.button = document.createElement("button");
-    this.button.textContent = "Open Airbyte";
-    this.button.classList.add("airbyte-widget-button");
-    this.button.addEventListener("click", () => this.open());
-
-    // Append button to containerElement if provided, otherwise to document.body
-    if (this.containerElement) {
-      this.containerElement.appendChild(this.button);
-    } else {
-      document.body.appendChild(this.button);
-    }
-  }
-
   public updateToken(token: string): void {
     if (!token) {
       throw new Error("Token is required");
@@ -274,26 +209,6 @@ export class EmbeddedWidget {
   }
 
   /**
-   * Mount the widget button to a specific element
-   * @param element The HTML element to mount the button to
-   */
-  public mount(element: HTMLElement): void {
-    if (!this.button) {
-      console.warn("No button to mount - widget may have been initialized with hideButton=true");
-      return;
-    }
-
-    // If button was already mounted somewhere, remove it first
-    if (this.button.parentElement) {
-      this.button.parentElement.removeChild(this.button);
-    }
-
-    // Update container element reference and append button
-    this.containerElement = element;
-    element.appendChild(this.button);
-  }
-
-  /**
    * Clean up resources used by the widget
    * Call this when the widget is no longer needed
    */
@@ -301,11 +216,6 @@ export class EmbeddedWidget {
     // Remove the dialog from the DOM
     if (this.dialog.parentElement) {
       this.dialog.parentElement.removeChild(this.dialog);
-    }
-
-    // Remove the button from the DOM if it exists
-    if (this.button && this.button.parentElement) {
-      this.button.parentElement.removeChild(this.button);
     }
 
     // Remove event listeners
