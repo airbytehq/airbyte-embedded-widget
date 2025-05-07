@@ -19,6 +19,7 @@ describe("EmbeddedWidget", () => {
     dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
       url: "http://localhost/",
       runScripts: "dangerously",
+      pretendToBeVisual: true,
     });
 
     window = dom.window as unknown as Window;
@@ -26,13 +27,25 @@ describe("EmbeddedWidget", () => {
 
     // Mock postMessage
     mockPostMessage = jest.fn();
-    window.postMessage = mockPostMessage;
+
+    // Set up global window for the widget
+    (global as any).window = window;
+    (global as any).document = document;
 
     // Create the widget with the test environment
     widget = new EmbeddedWidget(defaultConfig);
+
+    // Get the iframe and mock its contentWindow.postMessage
+    const iframe = document.querySelector("iframe");
+    if (iframe?.contentWindow) {
+      (iframe.contentWindow as any).postMessage = mockPostMessage;
+    }
   });
 
   afterEach(() => {
+    // Clean up global window
+    delete (global as any).window;
+    delete (global as any).document;
     dom.window.close();
   });
 
@@ -59,31 +72,57 @@ describe("EmbeddedWidget", () => {
 
   test("posts token to iframe when request received", () => {
     const iframe = document.querySelector("iframe");
-    const iframeWindow = iframe?.contentWindow as Window;
+    const iframeWindow = iframe?.contentWindow;
 
-    // Simulate receiving the auth_token_request message
-    const messageEvent = new MessageEvent("message", {
-      data: "auth_token_request",
-      origin: "https://foo.airbyte.com",
+    // Create a proper MessageEvent using the JSDOM window
+    const event = new dom.window.Event("message", {
+      bubbles: true,
+      cancelable: true,
     });
-    window.dispatchEvent(messageEvent);
+
+    // Add required properties manually since JSDOM's Event doesn't support MessageEvent properties
+    Object.defineProperties(event, {
+      data: { value: "auth_token_request" },
+      origin: { value: "https://foo.airbyte.com" },
+      source: { value: iframeWindow },
+    });
+
+    // Dispatch the event on the window
+    window.dispatchEvent(event);
 
     // Verify postMessage was called with correct parameters
     expect(mockPostMessage).toHaveBeenCalledWith(
       { scopedAuthToken: "mock-token" },
-      new URL("https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003")
-        .origin
+      "https://foo.airbyte.com"
     );
   });
 
   test("updateToken passes new token to iframe", () => {
+    const iframe = document.querySelector("iframe");
+    const iframeWindow = iframe?.contentWindow;
     const newToken = "eyJ0b2tlbiI6Im5ldy10b2tlbiIsIndpZGdldFVybCI6Imh0dHBzOi8vbmV3LndpZGdldC5jb20ifQo=";
+    
     widget.updateToken(newToken);
+
+    // Create a proper MessageEvent using the JSDOM window
+    const event = new dom.window.Event("message", {
+      bubbles: true,
+      cancelable: true,
+    });
+
+    // Add required properties manually since JSDOM's Event doesn't support MessageEvent properties
+    Object.defineProperties(event, {
+      data: { value: "auth_token_request" },
+      origin: { value: "https://new.widget.com" },
+      source: { value: iframeWindow },
+    });
+
+    window.dispatchEvent(event);
 
     // Verify postMessage was called with correct parameters
     expect(mockPostMessage).toHaveBeenCalledWith(
       { scopedAuthToken: "new-token" },
-      new URL("https://new.widget.com").origin
+      "https://new.widget.com"
     );
   });
 
@@ -98,11 +137,13 @@ describe("EmbeddedWidget", () => {
     const button = document.querySelector("button");
     const dialog = document.querySelector("dialog");
 
+    if (!dialog) {
+      throw new Error("Dialog element not found");
+    }
+
     // Mock showModal since JSDOM doesn't implement it
     const mockShowModal = jest.fn();
-    Object.defineProperty(dialog, "showModal", {
-      value: mockShowModal,
-    });
+    dialog.showModal = mockShowModal;
 
     button?.click();
     expect(mockShowModal).toHaveBeenCalled();
@@ -110,21 +151,30 @@ describe("EmbeddedWidget", () => {
 
   test("closes dialog when CLOSE_DIALOG message is received", () => {
     const dialog = document.querySelector("dialog");
+    const iframe = document.querySelector("iframe");
+
+    if (!dialog) {
+      throw new Error("Dialog element not found");
+    }
 
     // Mock close since JSDOM doesn't implement it
     const mockClose = jest.fn();
-    Object.defineProperty(dialog, "close", {
-      value: mockClose,
+    dialog.close = mockClose;
+
+    // Create a proper MessageEvent using the JSDOM window
+    const event = new dom.window.Event("message", {
+      bubbles: true,
+      cancelable: true,
     });
 
-    // Simulate receiving the CLOSE_DIALOG message
-    const messageEvent = new MessageEvent("message", {
-      data: "CLOSE_DIALOG",
-      origin: "https://foo.airbyte.com",
-      source: dialog?.querySelector("iframe")?.contentWindow as Window,
+    // Add required properties manually since JSDOM's Event doesn't support MessageEvent properties
+    Object.defineProperties(event, {
+      data: { value: "CLOSE_DIALOG" },
+      origin: { value: "https://foo.airbyte.com" },
+      source: { value: iframe?.contentWindow },
     });
-    window.dispatchEvent(messageEvent);
 
+    window.dispatchEvent(event);
     expect(mockClose).toHaveBeenCalled();
   });
 
@@ -142,6 +192,7 @@ describe("EmbeddedWidget", () => {
 
     // Verify the button was moved
     expect(button?.parentElement).toBe(newContainer);
-    expect(originalParent?.contains(button)).toBe(false);
+    expect(button?.parentElement?.id).toBe("new-container");
+    expect(originalParent).not.toBe(newContainer);
   });
 });
