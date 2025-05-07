@@ -31,9 +31,7 @@
     "airbyte",
     "embedded",
     "modal",
-    "widget",
-    "iframe",
-    "javascript"
+    "widget"
   ],
   "author": "",
   "license": "UNLICENSED",
