@@ -59,13 +59,6 @@ Load the widget via a CDN:
 
   document.getElementById("open-airbyte").addEventListener("click", () => widget.open());
 </script>
-```
-
-You can also use `unpkg` if you prefer:
-
-```html
-<script src="https://unpkg.com/@airbyte-embedded/airbyte-embedded-widget"></script>
-```
 
 ---
 
