@@ -126,15 +126,7 @@ describe("EmbeddedWidget", () => {
     );
   });
 
-  test("creates button with correct attributes", () => {
-    const button = document.querySelector("button");
-    expect(button).toBeTruthy();
-    expect(button?.textContent).toBe("Open Airbyte");
-    expect(button?.classList.contains("airbyte-widget-button")).toBe(true);
-  });
-
-  test("opens dialog when button is clicked", () => {
-    const button = document.querySelector("button");
+  test("opens dialog when open() is called", () => {
     const dialog = document.querySelector("dialog");
 
     if (!dialog) {
@@ -145,7 +137,7 @@ describe("EmbeddedWidget", () => {
     const mockShowModal = jest.fn();
     dialog.showModal = mockShowModal;
 
-    button?.click();
+    widget.open();
     expect(mockShowModal).toHaveBeenCalled();
   });
 
@@ -176,23 +168,5 @@ describe("EmbeddedWidget", () => {
 
     window.dispatchEvent(event);
     expect(mockClose).toHaveBeenCalled();
-  });
-
-  test("mount() method moves button to a different container", () => {
-    const button = document.querySelector("button");
-    const originalParent = button?.parentElement;
-
-    // Create a new container
-    const newContainer = document.createElement("div");
-    newContainer.id = "new-container";
-    document.body.appendChild(newContainer);
-
-    // Mount the widget to the new container
-    widget.mount(newContainer);
-
-    // Verify the button was moved
-    expect(button?.parentElement).toBe(newContainer);
-    expect(button?.parentElement?.id).toBe("new-container");
-    expect(originalParent).not.toBe(newContainer);
   });
 });

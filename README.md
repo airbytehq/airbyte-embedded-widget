@@ -21,17 +21,22 @@ pnpm add @airbyte-embedded/airbyte-embedded-widget
 
 Use it in your application:
 
-```ts
-import { EmbeddedWidget } from "@airbyte-embedded/airbyte-embedded-widget";
+```html
 
-const widget = new EmbeddedWidget({
-  token: "<your-token-here>",
-  onEvent: (event) => {
-    console.log("Widget event:", event);
-  },
-});
+<button id="open-airbyte">Open Airbyte</button>
 
-widget.mount(document.getElementById("widget-container")!);
+<script type="module">
+  import { EmbeddedWidget } from "@airbyte-embedded/airbyte-embedded-widget";
+
+  const widget = new EmbeddedWidget({
+    token: "<your-token-here>",
+    onEvent: (event) => {
+      console.log("Widget event:", event);
+    },
+  });
+
+  document.getElementById("open-airbyte").addEventListener("click", () => widget.open());
+</script>
 ```
 
 ---
@@ -41,6 +46,8 @@ widget.mount(document.getElementById("widget-container")!);
 Load the widget via a CDN:
 
 ```html
+<button id="open-airbyte">Open Airbyte</button>
+
 <script src="https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget"></script>
 <script>
   const widget = new AirbyteEmbeddedWidget({
@@ -50,7 +57,7 @@ Load the widget via a CDN:
     },
   });
 
-  widget.mount(document.getElementById("widget-container"));
+  document.getElementById("open-airbyte").addEventListener("click", () => widget.open());
 </script>
 ```
 
@@ -114,13 +121,17 @@ Use this to trigger actions like refreshing your UI or storing source IDs.
 
 ### Configuration Example
 
-```ts
-const widget = new EmbeddedWidget({
-  token: "<your-token-here>",
-  onEvent: handleWidgetEvent,
-});
+```html
+<button id="open-airbyte">Open Airbyte</button>
 
-widget.mount(document.getElementById("widget-container"));
+<script>
+  const widget = new EmbeddedWidget({
+    token: "<your-token-here>",
+    onEvent: handleWidgetEvent,
+  });
+
+  document.getElementById("open-airbyte").addEventListener("click", () => widget.open());
+</script>
 ```
 
 ## Demo Application
