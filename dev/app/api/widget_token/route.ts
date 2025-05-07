@@ -18,7 +18,7 @@ const debugLog = (message: string, data?: any) => {
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_AIRBYTE_PUBLIC_API_URL || "https://local.airbyte.dev/api/public";
-const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget`;
+const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget_token`;
 const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
 const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID;
 const CLIENT_SECRET = process.env.NEXT_PUBLIC_CLIENT_SECRET;
@@ -109,8 +109,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch embedded token" }, { status: 500 });
     }
 
-    const widgetToken = await widgetTokenResponse.text();
-
+    const widgetTokenJson = await widgetTokenResponse.json();
+    const widgetToken = widgetTokenJson.token;
     if (!!process.env.NEXT_PUBLIC_WEBAPP_URL) {
       // Decode the base64 token for debugging (it's a JSON object)
       try {

@@ -17,14 +17,13 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<EmbeddedWidget | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
     const initializeWidget = async () => {
-      if (!containerRef.current || initialized) {
+      if (initialized) {
         return;
       }
 
@@ -44,11 +43,6 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
           throw new Error("Missing token in response");
         }
 
-        // Check again if containerRef is still valid and component still mounted
-        if (!containerRef.current || !isMounted) {
-          return;
-        }
-
         try {
           widgetRef.current = new EmbeddedWidget({
             token: data.token,
@@ -63,9 +57,6 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
               }).catch((err) => console.error("Error sending event data:", err));
             },
           });
-
-          // Mount the widget to the container element
-          widgetRef.current.mount(containerRef.current);
 
           if (isMounted) {
             setInitialized(true);
@@ -93,11 +84,24 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
     };
   }, [onEvent]);
 
+  const handleOpenWidget = () => {
+    if (widgetRef.current) {
+      widgetRef.current.open();
+    }
+  };
+
   return (
     <div className={styles.widgetComponentWrapper}>
       {loading && <div className={styles.loading}>Loading widget...</div>}
       {error && <div className={styles.error}>Error: {error}</div>}
-      <div ref={containerRef} className={`${styles.widgetMount} ${className || ""}`} />
+      {initialized && (
+        <button 
+          onClick={handleOpenWidget}
+          className={`${styles.widgetButton} ${className || ""}`}
+        >
+          Open Airbyte
+        </button>
+      )}
     </div>
   );
 }
