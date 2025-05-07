@@ -24,11 +24,12 @@ app.use((req, res, next) => {
 
 // Read config from environment variables
 const BASE_URL = process.env.BASE_URL || "https://api.airbyte.com";
-const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget`;
+const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget_token`;
 const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const WORKSPACE_ID = process.env.WORKSPACE_ID;
+const ORGANIZATION_ID = process.env.ORGANIZATION_ID;
+const EXTERNAL_USER_ID = process.env.EXTERNAL_USER_ID;
 
 // GET /api/widget → fetch widget token and return it
 app.get("/api/widget_token", async (req, res) => {
@@ -70,8 +71,9 @@ app.get("/api/widget_token", async (req, res) => {
         Authorization: `Bearer ${access_token}`,
       },
       body: JSON.stringify({
-        workspaceId: WORKSPACE_ID,
+        organizationId: ORGANIZATION_ID,
         allowedOrigin: origin,
+        externalUserId: EXTERNAL_USER_ID,
       }),
     });
 
@@ -81,9 +83,9 @@ app.get("/api/widget_token", async (req, res) => {
       return res.status(500).json({ error: "Failed to fetch embedded token" });
     }
 
-    const widget_token = await widget_token_response.text();
+    const widget_response = await widget_token_response.json();
 
-    res.json({ token: widget_token });
+    res.json({ token: widget_response.token });
   } catch (err) {
     console.error("Unexpected error:", err);
     res.status(500).json({ error: "Internal server error" });
