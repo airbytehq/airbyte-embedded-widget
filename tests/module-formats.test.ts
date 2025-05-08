@@ -46,19 +46,15 @@ describe("Module Format Tests", () => {
 
   // Test CommonJS require
   test("should work as CommonJS module", () => {
-    // Mock require
-    const module = {
-      exports: {},
-    };
-    const require = (path: string) => {
-      if (path === "../src") {
-        return { AirbyteEmbeddedWidget };
+    // Clear require cache to ensure fresh load
+    Object.keys(require.cache).forEach(key => {
+      if (key.includes('airbyte-embedded-widget')) {
+        delete require.cache[key];
       }
-      return {};
-    };
+    });
 
-    // @ts-ignore - mocking require
-    const CJSWidget = module.exports.AirbyteEmbeddedWidget;
+    // Load the actual CommonJS bundle
+    const CJSWidget = require("../dist/index.cjs.js").AirbyteEmbeddedWidget;
     expect(CJSWidget).toBeDefined();
     const widget = new CJSWidget({ token: mockToken });
     expect(widget).toBeInstanceOf(CJSWidget);
@@ -66,10 +62,14 @@ describe("Module Format Tests", () => {
 
   // Test IIFE/global usage
   test("should work as IIFE/global script", () => {
-    // Mock window
-    (global as any).window = {};
+    // Clear require cache
+    Object.keys(require.cache).forEach(key => {
+      if (key.includes('airbyte-embedded-widget')) {
+        delete require.cache[key];
+      }
+    });
 
-    // Import the IIFE bundle
+    // Load the actual IIFE bundle
     require("../dist/airbyte-embedded-widget.iife.js");
 
     expect(window.AirbyteEmbeddedWidget).toBeDefined();
