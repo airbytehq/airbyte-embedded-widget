@@ -1,12 +1,12 @@
-import { EmbeddedWidget } from "./EmbeddedWidget";
+import { AirbyteEmbeddedWidget } from "./EmbeddedWidget";
 
 // Export for ES modules and CommonJS
-export { EmbeddedWidget };
+export { AirbyteEmbeddedWidget };
 
 // Export for IIFE/UMD bundles
-export default EmbeddedWidget;
+export default AirbyteEmbeddedWidget;
 
 // Also assign to window for direct script tag usage
 if (typeof window !== "undefined") {
-  (window as any).AirbyteEmbeddedWidget = EmbeddedWidget;
+  (window as any).AirbyteEmbeddedWidget = AirbyteEmbeddedWidget;
 }

@@ -3,15 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <title>Airbyte Embedded Widget</title>
+    <style>
+      .open-widget-btn {
+        background-color: #6557FF;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .open-widget-btn:hover {
+        background-color: #5246cc;
+      }
+    </style>
   </head>
   <body>
     <h1>Airbyte Embedded Widget</h1>
-    <div id="widget-container"></div>
+    <button id="open-widget" class="open-widget-btn">Open Airbyte Widget</button>
 
-    <script type="module">
-      import { EmbeddedWidget } from "https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget@0.3.0/+esm";
-
-      window.addEventListener("load", async () => {
+    <script src="https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget"></script>
+    
+    <script>
+      document.getElementById('open-widget').addEventListener('click', async () => {
         try {
           const response = await fetch("http://localhost:3001/api/widget_token");
           const data = await response.json();
@@ -33,12 +48,12 @@
               .catch((err) => console.error("Callback error:", err));
           };
 
-          const widget = new EmbeddedWidget({
+          const widget = new AirbyteEmbeddedWidget({
             token: data.token,
             onEvent: widgetResultCallback,
           });
 
-          widget.mount("#widget-container");
+          widget.open();
         } catch (err) {
           console.error("Failed to load widget:", err);
         }

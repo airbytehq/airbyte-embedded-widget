@@ -73,7 +73,7 @@ const WIDGET_STYLES = `
 }
 `;
 
-export class EmbeddedWidget {
+export class AirbyteEmbeddedWidget {
   private decodedToken: EmbeddedToken;
   private dialog: HTMLDialogElement = document.createElement("dialog");
   private iframe: HTMLIFrameElement = document.createElement("iframe");
@@ -81,7 +81,7 @@ export class EmbeddedWidget {
 
   constructor(config: EmbeddedWidgetConfig) {
     if (!config.token) {
-      throw new Error("Token is required to initialize EmbeddedWidget");
+      throw new Error("Token is required to initialize AirbyteEmbeddedWidget");
     }
 
     this.onEvent = config.onEvent;

@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { EmbeddedWidget, WidgetEvent } from "@/src/EmbeddedWidget";
+import { AirbyteEmbeddedWidget, WidgetEvent } from "@/src/EmbeddedWidget";
 import styles from "../page.module.css";
 
-// Debug logging to check if EmbeddedWidget is available
-console.log("EmbeddedWidget imported:", Boolean(EmbeddedWidget));
+// Debug logging to check if AirbyteEmbeddedWidget is available
+console.log("AirbyteEmbeddedWidget imported:", Boolean(AirbyteEmbeddedWidget));
 
 interface EmbeddedWidgetComponentProps {
   onEvent?: (event: WidgetEvent) => void;
@@ -17,7 +17,7 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const widgetRef = useRef<EmbeddedWidget | null>(null);
+  const widgetRef = useRef<AirbyteEmbeddedWidget | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -44,7 +44,7 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
         }
 
         try {
-          widgetRef.current = new EmbeddedWidget({
+          widgetRef.current = new AirbyteEmbeddedWidget({
             token: data.token,
             onEvent: (event: WidgetEvent) => {
               if (onEvent) {
