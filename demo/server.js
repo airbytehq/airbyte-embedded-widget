@@ -26,9 +26,9 @@ app.use((req, res, next) => {
 const BASE_URL = process.env.BASE_URL || "https://api.airbyte.com";
 const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget_token`;
 const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const ORGANIZATION_ID = process.env.ORGANIZATION_ID;
+const AIRBYTE_CLIENT_ID = process.env.AIRBYTE_CLIENT_ID;
+const AIRBYTE_CLIENT_SECRET = process.env.AIRBYTE_CLIENT_SECRET;
+const ORGANIZATION_ID = process.env.AIRBYTE_ORGANIZATION_ID;
 const EXTERNAL_USER_ID = process.env.EXTERNAL_USER_ID;
 
 // GET /api/widget → fetch widget token and return it
@@ -42,8 +42,8 @@ app.get("/api/widget_token", async (req, res) => {
       "http://localhost:3000";
 
     const access_token_body = JSON.stringify({
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
+      client_id: AIRBYTE_CLIENT_ID,
+      client_secret: AIRBYTE_CLIENT_SECRET,
       "grant-type": "client_credentials",
     });
     const response = await fetch(AIRBYTE_ACCESS_TOKEN_URL, {

@@ -1,4 +1,4 @@
-import { EmbeddedWidget } from "../src/EmbeddedWidget";
+import { AirbyteEmbeddedWidget } from "../src/EmbeddedWidget";
 import { JSDOM } from "jsdom";
 
 const defaultConfig = {
@@ -7,8 +7,8 @@ const defaultConfig = {
   // decodes to { "token": "mock-token", "widgetUrl": "https://foo.airbyte.com/embedded-widget&workspaceId=foo&allowedOrigin=https%3A%2F%2Flocalhost%3A3003"}
 };
 
-describe("EmbeddedWidget", () => {
-  let widget: EmbeddedWidget;
+describe("AirbyteEmbeddedWidget", () => {
+  let widget: AirbyteEmbeddedWidget;
   let dom: JSDOM;
   let window: Window;
   let document: Document;
@@ -33,7 +33,7 @@ describe("EmbeddedWidget", () => {
     (global as any).document = document;
 
     // Create the widget with the test environment
-    widget = new EmbeddedWidget(defaultConfig);
+    widget = new AirbyteEmbeddedWidget(defaultConfig);
 
     // Get the iframe and mock its contentWindow.postMessage
     const iframe = document.querySelector("iframe");

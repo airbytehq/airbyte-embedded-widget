@@ -22,13 +22,12 @@ pnpm add @airbyte-embedded/airbyte-embedded-widget
 Use it in your application:
 
 ```html
-
 <button id="open-airbyte">Open Airbyte</button>
 
 <script type="module">
-  import { EmbeddedWidget } from "@airbyte-embedded/airbyte-embedded-widget";
+  import { AirbyteEmbeddedWidget } from "@airbyte-embedded/airbyte-embedded-widget";
 
-  const widget = new EmbeddedWidget({
+  const widget = new AirbyteEmbeddedWidget({
     token: "<your-token-here>",
     onEvent: (event) => {
       console.log("Widget event:", event);
@@ -59,6 +58,7 @@ Load the widget via a CDN:
 
   document.getElementById("open-airbyte").addEventListener("click", () => widget.open());
 </script>
+```
 
 ---
 
@@ -118,7 +118,7 @@ Use this to trigger actions like refreshing your UI or storing source IDs.
 <button id="open-airbyte">Open Airbyte</button>
 
 <script>
-  const widget = new EmbeddedWidget({
+  const widget = new AirbyteEmbeddedWidget({
     token: "<your-token-here>",
     onEvent: handleWidgetEvent,
   });
