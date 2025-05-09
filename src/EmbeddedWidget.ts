@@ -39,6 +39,9 @@ const WIDGET_STYLES = `
   border: none;
   background: transparent;
   position: relative;
+  max-height: 100vh;
+  max-width: 100vw;
+  overflow: hidden;
 }
 
 .airbyte-widget-dialog-container {
@@ -47,6 +50,9 @@ const WIDGET_STYLES = `
   background: transparent;
   display: flex;
   flex-direction: column;
+  max-height: 100vh;
+  max-width: 100vw;
+  overflow: hidden;
 }
   
 .airbyte-widget-dialog-content {
@@ -55,6 +61,8 @@ const WIDGET_STYLES = `
   border-radius: 10px;  
   background: none;
   overflow: hidden;
+  max-width: 100vw;
+  max-height: calc(100vh - 60px);
 }
 
 .airbyte-widget-dialog-branding {
@@ -65,6 +73,15 @@ const WIDGET_STYLES = `
   background-image: url("data:image/svg+xml;charset=utf-8,${encodedAirbyteLogo}");
   background-repeat: no-repeat;
   background-position: center;
+}
+
+@media (max-height: 782px) {
+  .airbyte-widget-dialog-branding {
+    display: none;
+  }
+  .airbyte-widget-dialog-content {
+    max-height: 100vh;
+  }
 }
 
 .airbyte-widget-dialog-wrapper::backdrop {

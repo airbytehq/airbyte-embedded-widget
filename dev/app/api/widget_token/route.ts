@@ -22,8 +22,8 @@ const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget_token`;
 const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
 const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID;
 const CLIENT_SECRET = process.env.NEXT_PUBLIC_CLIENT_SECRET;
-const WORKSPACE_ID = process.env.NEXT_PUBLIC_WORKSPACE_ID;
-
+const EXTERNAL_ID = process.env.NEXT_PUBLIC_EXTERNAL_USER_ID;
+const ORGANIZATION_ID = process.env.NEXT_PUBLIC_ORGANIZATION_ID;
 export async function GET(request: NextRequest) {
   try {
     const referer = request.headers.get("referer");
@@ -43,8 +43,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing CLIENT_SECRET environment variable" }, { status: 500 });
     }
 
-    if (!WORKSPACE_ID) {
+    if (!EXTERNAL_ID) {
       return NextResponse.json({ error: "Missing WORKSPACE_ID environment variable" }, { status: 500 });
+    }
+
+    if (!ORGANIZATION_ID) {
+      return NextResponse.json({ error: "Missing ORGANIZATION_ID environment variable" }, { status: 500 });
     }
 
     // Get access token
@@ -96,7 +100,8 @@ export async function GET(request: NextRequest) {
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        workspaceId: WORKSPACE_ID,
+        externalUserId: EXTERNAL_ID,
+        organizationId: ORGANIZATION_ID,
         allowedOrigin: origin,
       }),
     });
@@ -119,7 +124,7 @@ export async function GET(request: NextRequest) {
         const tokenUrl = new URL(decodedToken.widgetUrl);
 
         const newToken = {
-          widgetUrl: `https://localhost:3000${tokenUrl.pathname}?${tokenUrl.searchParams.toString()}`,
+          widgetUrl: `${process.env.NEXT_PUBLIC_WEBAPP_URL}${tokenUrl.pathname}?${tokenUrl.searchParams.toString()}`,
           token: decodedToken.token,
         };
         debugLog("New token:", newToken);
