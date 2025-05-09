@@ -47,7 +47,7 @@ Load the widget via a CDN:
 ```html
 <button id="open-airbyte">Open Airbyte</button>
 
-<script src="https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget"></script>
+<script src="https://cdn.jsdelivr.net/npm/@airbyte-embedded/airbyte-embedded-widget@0.4.2"></script>
 <script>
   const widget = new AirbyteEmbeddedWidget({
     token: "<your-token-here>",
