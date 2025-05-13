@@ -11,7 +11,7 @@ NEXT_PUBLIC_WORKSPACE_ID= # A workspace id from your Airbyte instance, used to f
 NEXT_PUBLIC_AIRBYTE_PUBLIC_API_URL= # Public API entrypoint IE: https://api.cloud.airbyte.com or https://local.airbyte.dev/api/public
 ```
 
-You can optionally include `NEXT_PUBLIC_ALLOWED_ORIGIN` if you would like to override the allowed origin returned from the Airbyte server (for example, if you are running a locally served version of the webapp)
+You can optionally include `NEXT_PUBLIC_WEBAPP_URL` if you would like to override the allowed origin returned from the Airbyte server (for example, if you are running a locally served version of the webapp)
 
 Then, run the development server:
 
