@@ -10,3 +10,5 @@ export default AirbyteEmbeddedWidget;
 if (typeof window !== "undefined") {
   (window as any).AirbyteEmbeddedWidget = AirbyteEmbeddedWidget;
 }
+
+export type { EmbeddedWidgetConfig, WidgetEvent } from "./EmbeddedWidget";
