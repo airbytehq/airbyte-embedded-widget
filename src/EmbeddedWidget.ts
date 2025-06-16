@@ -38,10 +38,10 @@ const WIDGET_STYLES = `
   padding: 0;
   border: none;
   background: transparent;
-  position: relative;
   max-height: 100vh;
   max-width: 100vw;
   overflow: hidden;
+  margin: auto;
 }
 
 .airbyte-widget-dialog-container {

@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
 import { AirbyteEmbeddedWidget, WidgetEvent } from "@/src/EmbeddedWidget";
-import styles from "../page.module.css";
-
-// Debug logging to check if AirbyteEmbeddedWidget is available
-console.log("AirbyteEmbeddedWidget imported:", Boolean(AirbyteEmbeddedWidget));
 
 interface EmbeddedWidgetComponentProps {
   onEvent?: (event: WidgetEvent) => void;
@@ -21,35 +16,18 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
 
   useEffect(() => {
     let isMounted = true;
-
     const initializeWidget = async () => {
-      if (initialized) {
-        return;
-      }
-
+      if (initialized) return;
       try {
         const response = await fetch("/api/widget_token");
         const data = await response.json();
-
-        // Check if component is still mounted after async operations
-        if (!isMounted) {
-          return;
-        }
-
-        console.log("Token response:", data);
-
-        if (!data.token) {
-          console.error("Token response:", data);
-          throw new Error("Missing token in response");
-        }
-
+        if (!isMounted) return;
+        if (!data.token) throw new Error("Missing token in response");
         try {
           widgetRef.current = new AirbyteEmbeddedWidget({
             token: data.token,
             onEvent: (event: WidgetEvent) => {
-              if (onEvent) {
-                onEvent(event);
-              }
+              onEvent?.(event);
               fetch("/api/embedded_response", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -57,7 +35,6 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
               }).catch((err) => console.error("Error sending event data:", err));
             },
           });
-
           if (isMounted) {
             setInitialized(true);
             setLoading(false);
@@ -72,32 +49,25 @@ export function EmbeddedWidgetComponent({ onEvent, className }: EmbeddedWidgetCo
         }
       }
     };
-
-    // Reset initialized state on each mount to handle StrictMode remounting
     setInitialized(false);
-
-    // Execute initialization
     initializeWidget();
-
     return () => {
       isMounted = false;
     };
   }, [onEvent]);
 
   const handleOpenWidget = () => {
-    if (widgetRef.current) {
-      widgetRef.current.open();
-    }
+    widgetRef.current?.open();
   };
 
   return (
-    <div className={styles.widgetComponentWrapper}>
-      {loading && <div className={styles.loading}>Loading widget...</div>}
-      {error && <div className={styles.error}>Error: {error}</div>}
+    <div className="flex flex-col items-center gap-4">
+      {loading && <div className="text-gray-600 text-base">Loading widget...</div>}
+      {error && <div className="text-red-600 text-base p-4 bg-red-100 rounded border border-red-200">Error: {error}</div>}
       {initialized && (
-        <button 
+        <button
           onClick={handleOpenWidget}
-          className={`${styles.widgetButton} ${className || ""}`}
+          className={`px-6 py-3 text-base font-medium text-white bg-indigo-600 rounded-md shadow hover:bg-indigo-700 active:bg-indigo-800 transition-colors duration-200 ${className || ""}`}
         >
           Open Airbyte
         </button>
