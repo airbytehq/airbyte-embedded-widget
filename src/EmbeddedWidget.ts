@@ -41,8 +41,7 @@ const WIDGET_STYLES = `
   max-height: 100vh;
   max-width: 100vw;
   overflow: hidden;
-  margin: auto
-  
+  margin: auto;
 }
 
 .airbyte-widget-dialog-container {
