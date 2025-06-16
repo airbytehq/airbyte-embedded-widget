@@ -53,7 +53,6 @@ const WIDGET_STYLES = `
   max-height: 100vh;
   max-width: 100vw;
   overflow: hidden;
-
 }
   
 .airbyte-widget-dialog-content {
@@ -64,7 +63,6 @@ const WIDGET_STYLES = `
   overflow: hidden;
   max-width: 100vw;
   max-height: calc(100vh - 60px);
-
 }
 
 .airbyte-widget-dialog-branding {
