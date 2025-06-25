@@ -21,9 +21,9 @@ pnpm install
 3. Create a `.env` file in the `/demo` directory:
 
 ```env
-CLIENT_ID=
-CLIENT_SECRET=
-ORGANIZATION_ID=
+AIRBYTE_CLIENT_ID=
+AIRBYTE_CLIENT_SECRET=
+AIRBYTE_ORGANIZATION_ID=
 EXTERNAL_USER_ID=
 BASE_URL=
 ```
