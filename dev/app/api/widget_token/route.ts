@@ -18,8 +18,8 @@ const debugLog = (message: string, data?: any) => {
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_AIRBYTE_PUBLIC_API_URL || "https://local.airbyte.dev/api/public";
-const AIRBYTE_WIDGET_URL = `${BASE_URL}/v1/embedded/widget_token`;
-const AIRBYTE_ACCESS_TOKEN_URL = `${BASE_URL}/v1/applications/token`;
+const AIRBYTE_WIDGET_URL = `https://api.airbyte.com/v1/embedded/widget_token`;
+const AIRBYTE_ACCESS_TOKEN_URL = `https://api.airbyte.com/v1/applications/token`;
 const CLIENT_ID = process.env.NEXT_PUBLIC_CLIENT_ID;
 const CLIENT_SECRET = process.env.NEXT_PUBLIC_CLIENT_SECRET;
 const EXTERNAL_ID = process.env.NEXT_PUBLIC_EXTERNAL_USER_ID;
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!EXTERNAL_ID) {
-      return NextResponse.json({ error: "Missing WORKSPACE_ID environment variable" }, { status: 500 });
+      return NextResponse.json({ error: "Missing EXTERNAL_ID environment variable" }, { status: 500 });
     }
 
     if (!ORGANIZATION_ID) {
@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       client_secret: CLIENT_SECRET,
       "grant-type": "client_credentials",
     });
+    console.log("Access token body:", accessTokenBody);
 
     const response = await fetch(AIRBYTE_ACCESS_TOKEN_URL, {
       method: "POST",
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       },
       body: accessTokenBody,
     });
-
+    debugLog("Access token body:", accessTokenBody);
     debugLog("Response status:", response.status);
     debugLog("Response ok:", response.ok);
 
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
       request.headers.get("origin") ||
       request.headers.get("referer")?.replace(/\/$/, "") ||
       process.env.NEXT_PUBLIC_ALLOWED_ORIGIN ||
-      "http://localhost:3000";
+      "http://localhost:3003";
 
     debugLog("Using origin:", origin);
 
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
         const tokenUrl = new URL(decodedToken.widgetUrl);
 
         const newToken = {
-          widgetUrl: `${process.env.NEXT_PUBLIC_WEBAPP_URL}${tokenUrl.pathname}?${tokenUrl.searchParams.toString()}`,
+          widgetUrl: `${process.env.NEXT_PUBLIC_WEBAPP_URL}/widget?${tokenUrl.searchParams.toString()}`,
           token: decodedToken.token,
         };
         debugLog("New token:", newToken);
