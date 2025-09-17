@@ -1,6 +1,6 @@
 {
   "name": "@airbyte-embedded/airbyte-embedded-widget",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Embedded widget for Airbyte",
   "type": "module",
   "main": "dist/index.cjs.js",
